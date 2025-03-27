@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var Version string = "dev" //Default version if not set during build
+var Version string = "dev"
 
 type OutputEntry struct {
 	Timestamp string `json:"timestamp"`
@@ -20,7 +20,6 @@ type OutputEntry struct {
 	Browser   string `json:"browser"`
 }
 
-// NewRootCmd creates and returns the root command
 func NewRootCmd() *cobra.Command {
 	var days int
 	var browserType string
@@ -55,14 +54,20 @@ func NewRootCmd() *cobra.Command {
 				b := browsers[bType]
 				dbPath, err := b.GetHistoryPath()
 				if err != nil {
-					fmt.Printf("Error finding %s history file: %v\n", bType, err)
+					if !jsonOutput {
+						fmt.Printf("Error finding %s history file: %v\n", bType, err)
+					}
 					continue
 				}
-				fmt.Printf("Using %s database path: %s\n", bType, dbPath)
+				if !jsonOutput {
+					fmt.Printf("Using %s database path: %s\n", bType, dbPath)
+				}
 
 				entries, err := history.GetBrowserHistory(b, startTime, endTime)
 				if err != nil {
-					fmt.Printf("Error retrieving %s history (may be locked or inaccessible): %v\n", bType, err)
+					if !jsonOutput {
+						fmt.Printf("Error retrieving %s history (may be locked or inaccessible): %v\n", bType, err)
+					}
 					continue
 				}
 
@@ -77,7 +82,11 @@ func NewRootCmd() *cobra.Command {
 			}
 
 			if len(allEntries) == 0 {
-				fmt.Println("No history entries found for the specified time range across all selected browsers.")
+				if !jsonOutput {
+					fmt.Println("No history entries found for the specified time range across all selected browsers.")
+				} else {
+					fmt.Println("[]") // Empty JSON array
+				}
 				return
 			}
 
