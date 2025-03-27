@@ -17,7 +17,7 @@ func GetBrowserHistory(browserImpl browser.Browser, startTime, endTime time.Time
 		return nil, err
 	}
 
-	historyDBPath, cleanup, err := prepareDatabaseFile(sourceDBPath)
+	historyDBPath, cleanup, err := PrepareDatabaseFile(sourceDBPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare database file at %s: %v", sourceDBPath, err)
 	}
@@ -31,8 +31,8 @@ func GetBrowserHistory(browserImpl browser.Browser, startTime, endTime time.Time
 	return entries, nil
 }
 
-// prepareDatabaseFile tries to use the original file or creates a copy if locked.
-func prepareDatabaseFile(sourceDBPath string) (string, func(), error) {
+// PrepareDatabaseFile tries to use the original file or creates a copy if locked.
+func PrepareDatabaseFile(sourceDBPath string) (string, func(), error) {
 	// Attempt to open the file with write access to detect locks
 	f, err := os.OpenFile(sourceDBPath, os.O_RDWR, 0666)
 	if err == nil {
@@ -45,7 +45,7 @@ func prepareDatabaseFile(sourceDBPath string) (string, func(), error) {
 	tempDBPath := filepath.Join(tempDir, fmt.Sprintf("go-browser-history-%s-%d", filepath.Base(sourceDBPath), time.Now().UnixNano()))
 
 	// Copy the original file to the temporary location
-	if err := copyFile(sourceDBPath, tempDBPath); err != nil {
+	if err := CopyFile(sourceDBPath, tempDBPath); err != nil {
 		return "", func() {}, fmt.Errorf("failed to create temporary copy of %s: %v", sourceDBPath, err)
 	}
 
@@ -59,8 +59,8 @@ func prepareDatabaseFile(sourceDBPath string) (string, func(), error) {
 	return tempDBPath, cleanup, nil
 }
 
-// copyFile creates a copy of the source file at the destination path.
-func copyFile(src, dst string) error {
+// CopyFile creates a copy of the source file at the destination path.
+func CopyFile(src, dst string) error {
 	sourceFile, err := os.Open(src)
 	if err != nil {
 		return fmt.Errorf("failed to open source file %s: %v", src, err)
