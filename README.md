@@ -48,7 +48,6 @@ chmod +x build-and-test.sh
 
 Builds the native binary, runs unit tests, and tests the binary. Install jq for JSON validation if needed (brew install jq or sudo apt-get install jq).
 
-- Note: The build-and-test scripts have cross compile sections that can be commented in or out for your needs.
 
 ## Usage
 
