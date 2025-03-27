@@ -1,29 +1,48 @@
 package history
 
 import (
-	"fmt"           // For formatted output and error messages
-	"io"            // For file copying operations
-	"os"            // For operating system interactions like file handling
-	"path/filepath" // For manipulating file paths
-	"time"          // For generating unique temp file names
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"time"
 
-	"github.com/lotekdan/go-browser-history/internal/browser" // Browser-specific logic
+	"github.com/lotekdan/go-browser-history/internal/browser"
 )
 
-// GetBrowserHistory retrieves history entries for the specified browser and time range.
-func GetBrowserHistory(browserImpl browser.Browser, startTime, endTime time.Time) ([]browser.HistoryEntry, error) {
+type OutputEntry struct {
+	Timestamp string `json:"timestamp"`
+	Title     string `json:"title"`
+	URL       string `json:"url"`
+	Browser   string `json:"browser"`
+}
+
+func ToOutputEntries(entries []browser.HistoryEntry, browserName string) []OutputEntry {
+	var output []OutputEntry
+	for _, entry := range entries {
+		output = append(output, OutputEntry{
+			Timestamp: entry.Timestamp.Format(time.RFC3339),
+			Title:     entry.Title,
+			URL:       entry.URL,
+			Browser:   browserName,
+		})
+	}
+	return output
+}
+
+func GetBrowserHistory(browserImpl browser.Browser, startTime, endTime time.Time, verbose bool) ([]browser.HistoryEntry, error) {
 	sourceDBPath, err := browserImpl.GetHistoryPath()
 	if err != nil {
-		return nil, err
+		return nil, err // Return error silently unless logged elsewhere
 	}
 
-	historyDBPath, cleanup, err := PrepareDatabaseFile(sourceDBPath)
+	historyDBPath, cleanup, err := PrepareDatabaseFile(sourceDBPath, verbose)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare database file at %s: %v", sourceDBPath, err)
 	}
 	defer cleanup()
 
-	entries, err := browserImpl.ExtractHistory(historyDBPath, startTime, endTime)
+	entries, err := browserImpl.ExtractHistory(historyDBPath, startTime, endTime, verbose)
 	if err != nil {
 		return nil, err
 	}
@@ -31,35 +50,39 @@ func GetBrowserHistory(browserImpl browser.Browser, startTime, endTime time.Time
 	return entries, nil
 }
 
-// PrepareDatabaseFile tries to use the original file or creates a copy if locked.
-func PrepareDatabaseFile(sourceDBPath string) (string, func(), error) {
-	// Attempt to open the file with write access to detect locks
-	f, err := os.OpenFile(sourceDBPath, os.O_RDWR, 0666)
-	if err == nil {
-		f.Close()
-		return sourceDBPath, func() {}, nil // No cleanup needed for original file
-	}
-
-	// Create a unique temporary file path
+func PrepareDatabaseFile(sourceDBPath string, verbose bool) (string, func(), error) {
 	tempDir := os.TempDir()
-	tempDBPath := filepath.Join(tempDir, fmt.Sprintf("go-browser-history-%s-%d", filepath.Base(sourceDBPath), time.Now().UnixNano()))
+	tempBaseName := fmt.Sprintf("go-browser-history-%s-%d", filepath.Base(sourceDBPath), time.Now().UnixNano())
+	tempDBPath := filepath.Join(tempDir, tempBaseName)
 
-	// Copy the original file to the temporary location
 	if err := CopyFile(sourceDBPath, tempDBPath); err != nil {
-		return "", func() {}, fmt.Errorf("failed to create temporary copy of %s: %v", sourceDBPath, err)
+		return "", func() {}, fmt.Errorf("failed to copy database %s to %s: %v", sourceDBPath, tempDBPath, err)
 	}
 
-	// Define cleanup function to remove the temporary file
-	cleanup := func() {
-		if err := os.Remove(tempDBPath); err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: failed to remove temp file %s: %v\n", tempDBPath, err)
+	for _, suffix := range []string{"-wal", "-shm"} {
+		srcExtra := sourceDBPath + suffix
+		dstExtra := tempDBPath + suffix
+		if _, err := os.Stat(srcExtra); err == nil {
+			if err := CopyFile(srcExtra, dstExtra); err != nil && verbose {
+				fmt.Fprintf(os.Stderr, "Debug: Warning: failed to copy %s to %s: %v\n", srcExtra, dstExtra, err)
+			}
 		}
 	}
 
+	cleanup := func() {
+		for _, file := range []string{tempDBPath, tempDBPath + "-wal", tempDBPath + "-shm"} {
+			if err := os.Remove(file); err != nil && !os.IsNotExist(err) && verbose {
+				fmt.Fprintf(os.Stderr, "Debug: Warning: failed to remove temp file %s: %v\n", file, err)
+			}
+		}
+	}
+
+	if verbose {
+		fmt.Fprintf(os.Stderr, "Debug: Using temp database file: %s\n", tempDBPath)
+	}
 	return tempDBPath, cleanup, nil
 }
 
-// CopyFile creates a copy of the source file at the destination path.
 func CopyFile(src, dst string) error {
 	sourceFile, err := os.Open(src)
 	if err != nil {
@@ -77,5 +100,5 @@ func CopyFile(src, dst string) error {
 		return fmt.Errorf("failed to copy from %s to %s: %v", src, dst, err)
 	}
 
-	return destFile.Sync() // Ensure all data is written to disk
+	return destFile.Sync()
 }

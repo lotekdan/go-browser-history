@@ -40,7 +40,7 @@ func (cb *ChromeBrowser) GetHistoryPath() (string, error) {
 }
 
 // ExtractHistory extracts Chrome history entries within the given time range.
-func (cb *ChromeBrowser) ExtractHistory(historyDBPath string, startTime, endTime time.Time) ([]HistoryEntry, error) {
+func (cb *ChromeBrowser) ExtractHistory(historyDBPath string, startTime, endTime time.Time, verbose bool) ([]HistoryEntry, error) {
 	db, err := sql.Open("sqlite3", "file:"+historyDBPath+"?mode=ro")
 	if err != nil {
 		return nil, fmt.Errorf("failed to open Chrome history database at %s: %v", historyDBPath, err)

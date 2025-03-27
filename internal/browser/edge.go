@@ -30,7 +30,7 @@ func (eb *EdgeBrowser) GetHistoryPath() (string, error) {
 }
 
 // ExtractHistory extracts Edge history entries, delegating to ChromeBrowser due to shared schema.
-func (eb *EdgeBrowser) ExtractHistory(historyDBPath string, startTime, endTime time.Time) ([]HistoryEntry, error) {
+func (eb *EdgeBrowser) ExtractHistory(historyDBPath string, startTime, endTime time.Time, verbose bool) ([]HistoryEntry, error) {
 	chromeBrowser := &ChromeBrowser{}
-	return chromeBrowser.ExtractHistory(historyDBPath, startTime, endTime)
+	return chromeBrowser.ExtractHistory(historyDBPath, startTime, endTime, verbose)
 }
