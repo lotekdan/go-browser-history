@@ -12,12 +12,12 @@ $version = "v1.0.0"
 # Store original CC value
 $originalCC = $env:CC
 
-# Build for Windows (use default Windows GCC)
+# Build for Windows
 Write-Host "Building for Windows (amd64)..."
 $env:GOOS = "windows"
 $env:GOARCH = "amd64"
 $env:CGO_ENABLED = "1"
-$env:CC = $null  # Use default Windows compiler
+$env:CC = $null
 go build -o "$binDir/go-browser-history-windows-amd64.exe" -ldflags "-X main.Version=$version" ./cmd/
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Windows build failed" -ForegroundColor Red
@@ -62,7 +62,9 @@ if ($output) {
 # Test 3: Chrome only, 10 days
 Write-Host "Testing Chrome history (10 days)..."
 $output = & $binary --days 10 --browser chrome
-if ($output -and $output -notmatch "edge" -and $output -notmatch "firefox") {
+# Filter out log lines and check remaining output
+$historyOutput = $output -notmatch "Using.*database path"
+if ($historyOutput -and $historyOutput -notmatch "edge" -and $historyOutput -notmatch "firefox") {
     Write-Host "Chrome-only test passed" -ForegroundColor Green
 } else {
     Write-Host "Chrome-only test failed (unexpected output or no output): $output" -ForegroundColor Red
@@ -74,7 +76,7 @@ Write-Host "Testing JSON output..."
 $output = & $binary --days 5 --json
 try {
     $json = $output | ConvertFrom-Json
-    if ($json -or $output -eq "[]") {  # Allow empty array as valid JSON
+    if ($json -or $output -eq "[]") {
         Write-Host "JSON output test passed" -ForegroundColor Green
     } else {
         Write-Host "JSON output test failed (empty or invalid JSON): $output" -ForegroundColor Red
@@ -84,39 +86,6 @@ try {
     Write-Host "JSON output test failed (invalid JSON): $output" -ForegroundColor Red
     exit 1
 }
-
-# Optional: Cross-compilation builds (commented out unless cross-compilers are set up)
-<#
-# Check for macOS cross-compiler
-$macCompiler = "x86_64-apple-darwin21.6-clang"
-if (Get-Command $macCompiler -ErrorAction SilentlyContinue) {
-    Write-Host "Building for macOS (amd64)..."
-    $env:GOOS = "darwin"
-    $env:GOARCH = "amd64"
-    $env:CC = $macCompiler
-    go build -o "$binDir/go-browser-history-darwin-amd64" -ldflags "-X main.Version=$version" ./cmd/
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "macOS build failed" -ForegroundColor Red
-    }
-} else {
-    Write-Host "Skipping macOS build (cross-compiler $macCompiler not found)" -ForegroundColor Yellow
-}
-
-# Check for Linux cross-compiler
-$linuxCompiler = "x86_64-linux-gnu-gcc"
-if (Get-Command $linuxCompiler -ErrorAction SilentlyContinue) {
-    Write-Host "Building for Linux (amd64)..."
-    $env:GOOS = "linux"
-    $env:GOARCH = "amd64"
-    $env:CC = $linuxCompiler
-    go build -o "$binDir/go-browser-history-linux-amd64" -ldflags "-X main.Version=$version" ./cmd/
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "Linux build failed" -ForegroundColor Red
-    }
-} else {
-    Write-Host "Skipping Linux build (cross-compiler $linuxCompiler not found)" -ForegroundColor Yellow
-}
-#>
 
 # Restore original CC value
 $env:CC = $originalCC
