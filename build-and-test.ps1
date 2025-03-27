@@ -6,21 +6,26 @@ if (-not (Test-Path $binDir)) {
     New-Item -ItemType Directory -Path $binDir | Out-Null
 }
 
-# Version info (optional, can be set via git tag or manually)
-$version = "v1.0.0"
+# Get version from the latest Git tag
+$appVersion = git describe --tags --always 2>$null
+if (-not $appVersion) {
+    # Fallback if Git isn’t available or no tags exist
+    $appVersion = "v0.0.0-dev"
+    Write-Host "Warning: Could not retrieve Git tag, using fallback version: $appVersion" -ForegroundColor Yellow
+}
 
 # Store original CC value
 $originalCC = $env:CC
 
 # Build for Windows
-Write-Host "Building for Windows (amd64)..."
+Write-Host "Building for Windows (amd64) with version $appVersion..."
 $env:GOOS = "windows"
 $env:GOARCH = "amd64"
 $env:CGO_ENABLED = "1"
 $env:CC = $null
-go build -o "$binDir/go-browser-history-windows-amd64.exe" -ldflags "-X main.Version=$version" ./cmd/
+go build -o "$binDir/go-browser-history-windows-amd64.exe" -ldflags "-X main.Version=$appVersion" ./cmd/
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "Windows build failed" -ForegroundColor Red
+    Write-Host "Windows build failed for $binDir/go-browser-history-windows-amd64.exe" -ForegroundColor Red
     exit 1
 }
 
@@ -42,10 +47,10 @@ if (-not (Test-Path $binary)) {
 # Test 1: Version check
 Write-Host "Testing version flag..."
 $output = & $binary --version
-if ($output -match "v1.0.0") {
+if ($output -match [regex]::Escape($appVersion)) {
     Write-Host "Version test passed: $output" -ForegroundColor Green
 } else {
-    Write-Host "Version test failed. Expected 'v1.0.0', got: $output" -ForegroundColor Red
+    Write-Host "Version test failed. Expected '$appVersion', got: $output" -ForegroundColor Red
     exit 1
 }
 
@@ -81,7 +86,7 @@ try {
         exit 1
     }
 } catch {
-    Write-Host "JSON output test failed (invalid JSON)" -ForegroundColor Red
+    Write-Host "JSON output test failed (invalid JSON): $output" -ForegroundColor Red
     exit 1
 }
 
