@@ -47,8 +47,8 @@ func (cb *ChromeBrowser) ExtractHistory(historyDBPath string, startTime, endTime
 	}
 	defer db.Close()
 
-	chromeStartTime := timeToChromeTime(startTime)
-	chromeEndTime := timeToChromeTime(endTime)
+	chromeStartTime := TimeToChromeTime(startTime)
+	chromeEndTime := TimeToChromeTime(endTime)
 
 	rows, err := db.Query(chromeHistoryQuery, chromeStartTime, chromeEndTime)
 	if err != nil {
@@ -73,8 +73,8 @@ func (cb *ChromeBrowser) ExtractHistory(historyDBPath string, startTime, endTime
 	return entries, nil
 }
 
-// timeToChromeTime converts Go time.Time to Chrome's timestamp format (microseconds since 1601-01-01).
-func timeToChromeTime(t time.Time) int64 {
+// TimeToChromeTime converts Go time.Time to Chrome's timestamp format (microseconds since 1601-01-01).
+func TimeToChromeTime(t time.Time) int64 {
 	const epochDiff = 11644473600000000 // Microseconds from 1601-01-01 to 1970-01-01
 	return t.UnixMicro() + epochDiff
 }
