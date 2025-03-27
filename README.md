@@ -1,6 +1,4 @@
-
-
-## go-browser-history
+## Go-Browser-History
 
 
 `go-browser-history` is a command-line tool written in Go that retrieves browsing history from Google Chrome, Microsoft Edge, and Mozilla Firefox across Windows, macOS, and Linux. It supports filtering history by a specified number of days and can output results in either human-readable text or JSON format. The tool handles locked database files by creating temporary copies, making it robust even when browsers are running.
@@ -31,7 +29,7 @@ Prerequisites
     -   Linux: GCC (sudo apt-get install build-essential on Ubuntu).
         
 
-Building the Tool
+## Building the Tool
 
 Binaries are built into the bin/ directory with platform-specific names (e.g., go-browser-history-windows-amd64.exe).
 
@@ -94,9 +92,27 @@ To build for all platforms from one machine:
     ```bash
     docker run --rm -v $(pwd):/go/src/project -w /go/src/project golang:cross bash -c "GOOS=windows GOARCH=amd64 CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc go build -o bin/go-browser-history-windows-amd64.exe ./cmd/ && GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -o bin/go-browser-history-linux-amd64 ./cmd/ && GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 go build -o bin/go-browser-history-darwin-amd64 ./cmd/"
     ```
-    
 
-Usage
+## Testing
+### Windows
+```powershell
+.\test.ps1
+```
+
+Runs unit tests and functional tests for the Windows binary.
+
+macOS/Linux
+
+bash
+
+```bash
+chmod +x test.sh
+./test.sh
+```
+
+Runs unit tests and functional tests for the native binary. Install jq for JSON validation if needed (brew install jq or sudo apt-get install jq).    
+
+## Usage
 
 Run the built binary with the following arguments:
 
@@ -154,4 +170,4 @@ Notes
 
 Contributing
 
-Feel free to use how you see fit. Another prompt based project.
+Feel free to open issues or submit pull requests on GitHub!
