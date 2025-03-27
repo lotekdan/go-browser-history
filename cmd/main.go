@@ -12,7 +12,7 @@ import (
 )
 
 // Version holds the application version, defaults to "dev" if not set during build.
-var Version string = "dev"
+var Version string = "1.1.0"
 
 // OutputEntry defines the structure for a single history entry in the output.
 type OutputEntry struct {
