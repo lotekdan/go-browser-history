@@ -1,4 +1,4 @@
-package browser
+package test // Separate package from browser
 
 import (
 	"database/sql"
@@ -6,11 +6,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lotekdan/go-browser-history/internal/browser" // Import parent package
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func TestEdgeGetHistoryPath(t *testing.T) {
-	b := NewEdgeBrowser()
+func TestChromeGetHistoryPath(t *testing.T) {
+	b := browser.NewChromeBrowser() // Fully qualified name
 	path, err := b.GetHistoryPath()
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -20,8 +21,8 @@ func TestEdgeGetHistoryPath(t *testing.T) {
 	}
 }
 
-func TestEdgeExtractHistory(t *testing.T) {
-	tempFile, err := os.CreateTemp("", "edge_history_test_*.sqlite")
+func TestChromeExtractHistory(t *testing.T) {
+	tempFile, err := os.CreateTemp("", "chrome_history_test_*.sqlite")
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
@@ -41,12 +42,12 @@ func TestEdgeExtractHistory(t *testing.T) {
         );
         INSERT INTO urls (url, title, last_visit_time) VALUES
             ('https://example.com', 'Example', ?);
-    `, timeToChromeTime(time.Now()))
+    `, browser.TimeToChromeTime(time.Now())) // Use exported function
 	if err != nil {
 		t.Fatalf("Failed to setup DB: %v", err)
 	}
 
-	b := NewEdgeBrowser()
+	b := browser.NewChromeBrowser() // Fully qualified name
 	startTime := time.Now().AddDate(0, 0, -1)
 	endTime := time.Now()
 

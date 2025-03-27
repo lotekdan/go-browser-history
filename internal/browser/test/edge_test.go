@@ -1,4 +1,4 @@
-package browser
+package test
 
 import (
 	"database/sql"
@@ -6,11 +6,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lotekdan/go-browser-history/internal/browser"
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func TestChromeGetHistoryPath(t *testing.T) {
-	b := NewChromeBrowser()
+func TestEdgeGetHistoryPath(t *testing.T) {
+	b := browser.NewEdgeBrowser() // Updated to use imported package
 	path, err := b.GetHistoryPath()
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -20,8 +21,8 @@ func TestChromeGetHistoryPath(t *testing.T) {
 	}
 }
 
-func TestChromeExtractHistory(t *testing.T) {
-	tempFile, err := os.CreateTemp("", "chrome_history_test_*.sqlite")
+func TestEdgeExtractHistory(t *testing.T) {
+	tempFile, err := os.CreateTemp("", "edge_history_test_*.sqlite")
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
@@ -40,13 +41,13 @@ func TestChromeExtractHistory(t *testing.T) {
             last_visit_time INTEGER
         );
         INSERT INTO urls (url, title, last_visit_time) VALUES
-            ('https://example.com', 'Example', ?);
-    `, timeToChromeTime(time.Now())) // Use the existing function
+            ('https://example.org', 'Example Org', ?);
+    `, browser.TimeToChromeTime(time.Now())) // Edge uses Chrome’s format
 	if err != nil {
 		t.Fatalf("Failed to setup DB: %v", err)
 	}
 
-	b := NewChromeBrowser()
+	b := browser.NewEdgeBrowser() // Updated to use imported package
 	startTime := time.Now().AddDate(0, 0, -1)
 	endTime := time.Now()
 
@@ -57,7 +58,7 @@ func TestChromeExtractHistory(t *testing.T) {
 	if len(entries) != 1 {
 		t.Errorf("Expected 1 entry, got %d", len(entries))
 	}
-	if entries[0].URL != "https://example.com" {
-		t.Errorf("Expected URL 'https://example.com', got %s", entries[0].URL)
+	if entries[0].URL != "https://example.org" {
+		t.Errorf("Expected URL 'https://example.org', got %s", entries[0].URL)
 	}
 }
