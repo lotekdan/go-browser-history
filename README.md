@@ -154,4 +154,4 @@ Notes
 
 Contributing
 
-Feel free to open issues or submit pull requests on GitHub!
+Feel free to use how you see fit. Another prompt based project.
