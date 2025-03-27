@@ -59,7 +59,8 @@ func NewRootCmd() *cobra.Command {
 					}
 					continue
 				}
-				if !jsonOutput {
+				// Only print DB path when querying all browsers and not in JSON mode
+				if !jsonOutput && len(selectedBrowsers) > 1 {
 					fmt.Printf("Using %s database path: %s\n", bType, dbPath)
 				}
 
@@ -85,7 +86,7 @@ func NewRootCmd() *cobra.Command {
 				if !jsonOutput {
 					fmt.Println("No history entries found for the specified time range across all selected browsers.")
 				} else {
-					fmt.Println("[]") // Empty JSON array
+					fmt.Println("[]")
 				}
 				return
 			}
