@@ -3,95 +3,84 @@ package browser
 import (
 	"database/sql" // For SQL database interactions
 	"fmt"          // For formatted output and error messages
-	"os"           // For operating system interactions like environment variables
-	"runtime"      // For determining the operating system
-	"time"         // For handling time-related operations
+	"os"           // For environment variables
+	"runtime"      // For OS detection
+	"time"         // For time conversions
 
-	_ "github.com/mattn/go-sqlite3" // Import sqlite3 driver anonymously to register it with database/sql
+	_ "github.com/mattn/go-sqlite3" // SQLite driver
 )
+
+// chromeHistoryQuery is the SQL query for retrieving Chrome history entries.
+const chromeHistoryQuery = `
+    SELECT url, title, last_visit_time 
+    FROM urls 
+    WHERE last_visit_time >= ? AND last_visit_time <= ?
+    ORDER BY last_visit_time DESC`
 
 // ChromeBrowser implements the Browser interface for Google Chrome.
 type ChromeBrowser struct{}
 
 // NewChromeBrowser creates a new instance of ChromeBrowser.
 func NewChromeBrowser() Browser {
-	return &ChromeBrowser{} // Return a pointer to a new ChromeBrowser struct
+	return &ChromeBrowser{}
 }
 
-// GetHistoryPath retrieves the path to Chrome's history database file based on the OS.
-func (c *ChromeBrowser) GetHistoryPath() (string, error) {
-	switch runtime.GOOS { // Determine the operating system
+// GetHistoryPath retrieves the path to Chrome's history database file.
+func (cb *ChromeBrowser) GetHistoryPath() (string, error) {
+	switch runtime.GOOS {
 	case "windows":
-		// Windows path using LOCALAPPDATA environment variable
 		return os.Getenv("LOCALAPPDATA") + "\\Google\\Chrome\\User Data\\Default\\History", nil
 	case "darwin":
-		// macOS path using HOME environment variable
 		return os.Getenv("HOME") + "/Library/Application Support/Google/Chrome/Default/History", nil
 	case "linux":
-		// Linux path using HOME environment variable
 		return os.Getenv("HOME") + "/.config/google-chrome/Default/History", nil
 	default:
-		// Return an error for unsupported operating systems
 		return "", fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
 	}
 }
 
-// ExtractHistory extracts Chrome history entries from the database within the given time range.
-func (c *ChromeBrowser) ExtractHistory(dbPath string, startTime, endTime time.Time) ([]HistoryEntry, error) {
-	// Open the SQLite database in read-only mode to avoid locking issues
-	db, err := sql.Open("sqlite3", "file:"+dbPath+"?mode=ro")
+// ExtractHistory extracts Chrome history entries within the given time range.
+func (cb *ChromeBrowser) ExtractHistory(historyDBPath string, startTime, endTime time.Time) ([]HistoryEntry, error) {
+	db, err := sql.Open("sqlite3", "file:"+historyDBPath+"?mode=ro")
 	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %v", err) // Wrap error with context
+		return nil, fmt.Errorf("failed to open Chrome history database at %s: %v", historyDBPath, err)
 	}
-	defer db.Close() // Ensure the database connection is closed when done
+	defer db.Close()
 
-	// Convert Go time.Time to Chrome's timestamp format (microseconds since 1601-01-01)
 	chromeStartTime := timeToChromeTime(startTime)
 	chromeEndTime := timeToChromeTime(endTime)
 
-	// Query the database for history entries within the time range, sorted by most recent
-	rows, err := db.Query(`
-        SELECT url, title, last_visit_time 
-        FROM urls 
-        WHERE last_visit_time >= ? AND last_visit_time <= ?
-        ORDER BY last_visit_time DESC`,
-		chromeStartTime, chromeEndTime)
+	rows, err := db.Query(chromeHistoryQuery, chromeStartTime, chromeEndTime)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query database: %v", err) // Wrap error with context
+		return nil, fmt.Errorf("failed to query Chrome history from %s: %v", historyDBPath, err)
 	}
-	defer rows.Close() // Ensure query results are closed when done
+	defer rows.Close()
 
-	// Collect history entries from the query results
 	var entries []HistoryEntry
-	for rows.Next() { // Iterate over each row
-		var url, title string
-		var timestamp int64
-		// Scan row data into variables
-		if err := rows.Scan(&url, &title, &timestamp); err != nil {
-			return nil, fmt.Errorf("failed to scan row: %v", err) // Wrap error with context
+	for rows.Next() {
+		var pageURL, pageTitle string
+		var visitTimestamp int64
+		if err := rows.Scan(&pageURL, &pageTitle, &visitTimestamp); err != nil {
+			return nil, fmt.Errorf("failed to scan Chrome history row from %s: %v", historyDBPath, err)
 		}
-		// Convert Chrome timestamp back to Go time.Time and create entry
 		entries = append(entries, HistoryEntry{
-			URL:       url,
-			Title:     title,
-			Timestamp: chromeTimeToTime(timestamp),
+			URL:       pageURL,
+			Title:     pageTitle,
+			Timestamp: chromeTimeToTime(visitTimestamp),
 		})
 	}
 
-	return entries, nil // Return the collected history entries
+	return entries, nil
 }
 
-// timeToChromeTime converts Go time.Time to Chrome timestamp.
-// Chrome uses microseconds since 1601-01-01 as its epoch.
+// timeToChromeTime converts Go time.Time to Chrome's timestamp format (microseconds since 1601-01-01).
 func timeToChromeTime(t time.Time) int64 {
-	epochDiff := int64(11644473600000000) // Microseconds from 1601-01-01 to 1970-01-01
-	return t.UnixMicro() + epochDiff      // Convert Unix microseconds to Chrome's epoch
+	const epochDiff = 11644473600000000 // Microseconds from 1601-01-01 to 1970-01-01
+	return t.UnixMicro() + epochDiff
 }
 
-// chromeTimeToTime converts Chrome timestamp to Go time.Time.
-// Reverses the conversion from Chrome's epoch to Unix epoch.
+// chromeTimeToTime converts Chrome's timestamp to Go time.Time.
 func chromeTimeToTime(chromeTimestamp int64) time.Time {
-	epochDiff := int64(11644473600000000)    // Microseconds from 1601-01-01 to 1970-01-01
-	unixMicro := chromeTimestamp - epochDiff // Convert Chrome microseconds to Unix microseconds
-	return time.UnixMicro(unixMicro)         // Create time.Time from Unix microseconds
+	const epochDiff = 11644473600000000
+	return time.UnixMicro(chromeTimestamp - epochDiff)
 }

@@ -3,121 +3,118 @@ package browser
 import (
 	"database/sql"  // For SQL database interactions
 	"fmt"           // For formatted output and error messages
-	"os"            // For operating system interactions like file reading
-	"path/filepath" // For manipulating file paths
-	"regexp"        // For regular expression parsing of profiles.ini
-	"runtime"       // For determining the operating system
-	"time"          // For handling time-related operations
+	"os"            // For file operations
+	"path/filepath" // For path manipulation
+	"regexp"        // For parsing profiles.ini
+	"runtime"       // For OS detection
+	"time"          // For time handling
 
-	_ "github.com/mattn/go-sqlite3" // Import sqlite3 driver anonymously to register it with database/sql
+	_ "github.com/mattn/go-sqlite3" // SQLite driver
 )
+
+// profilePathRegex extracts profile paths from profiles.ini.
+var profilePathRegex = regexp.MustCompile(`Path=(.+)$`)
+
+// firefoxHistoryQuery retrieves Firefox history entries.
+const firefoxHistoryQuery = `
+    SELECT moz_places.url, moz_places.title, moz_historyvisits.visit_date
+    FROM moz_places 
+    JOIN moz_historyvisits ON moz_historyvisits.place_id = moz_places.id
+    WHERE moz_historyvisits.visit_date >= ? AND moz_historyvisits.visit_date <= ?
+    ORDER BY moz_historyvisits.visit_date DESC`
 
 // FirefoxBrowser implements the Browser interface for Mozilla Firefox.
 type FirefoxBrowser struct{}
 
 // NewFirefoxBrowser creates a new instance of FirefoxBrowser.
 func NewFirefoxBrowser() Browser {
-	return &FirefoxBrowser{} // Return a pointer to a new FirefoxBrowser struct
+	return &FirefoxBrowser{}
 }
 
-// GetHistoryPath retrieves the path to Firefox's history database file (places.sqlite).
-func (f *FirefoxBrowser) GetHistoryPath() (string, error) {
-	var profileDir string
-	// Determine the Firefox profile directory based on the operating system
+// GetHistoryPath retrieves the path to Firefox's history database file.
+func (fb *FirefoxBrowser) GetHistoryPath() (string, error) {
+	baseDir, err := fb.getFirefoxProfileBaseDir()
+	if err != nil {
+		return "", err
+	}
+	return fb.findHistoryDBPath(baseDir)
+}
+
+// getFirefoxProfileBaseDir determines the OS-specific base directory for Firefox profiles.
+func (fb *FirefoxBrowser) getFirefoxProfileBaseDir() (string, error) {
 	switch runtime.GOOS {
 	case "windows":
-		// Windows path using APPDATA environment variable
-		profileDir = os.Getenv("APPDATA") + "\\Mozilla\\Firefox\\Profiles"
+		return os.Getenv("APPDATA") + "\\Mozilla\\Firefox\\Profiles", nil
 	case "darwin":
-		// macOS path using HOME environment variable
-		profileDir = os.Getenv("HOME") + "/Library/Application Support/Firefox/Profiles"
+		return os.Getenv("HOME") + "/Library/Application Support/Firefox/Profiles", nil
 	case "linux":
-		// Linux path using HOME environment variable
-		profileDir = os.Getenv("HOME") + "/.mozilla/firefox"
+		return os.Getenv("HOME") + "/.mozilla/firefox", nil
 	default:
-		// Return an error for unsupported operating systems
 		return "", fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
 	}
+}
 
-	// Read profiles.ini to find the default profile
-	iniPath := filepath.Join(filepath.Dir(profileDir), "profiles.ini")
-	if _, err := os.Stat(iniPath); err == nil { // Check if profiles.ini exists
-		iniData, err := os.ReadFile(iniPath)
-		if err == nil { // Successfully read the file
-			// Use regex to extract profile paths from profiles.ini
-			re := regexp.MustCompile(`Path=(.+)$`)
-			matches := re.FindAllStringSubmatch(string(iniData), -1)
-			for _, match := range matches {
-				if len(match) > 1 { // Ensure there's a captured group
-					profilePath := filepath.Join(filepath.Dir(profileDir), match[1])
-					dbPath := filepath.Join(profilePath, "places.sqlite")
-					if _, err := os.Stat(dbPath); err == nil { // Check if places.sqlite exists
-						return dbPath, nil // Return the first valid database path
-					}
+// findHistoryDBPath locates the places.sqlite file within the profile base directory.
+func (fb *FirefoxBrowser) findHistoryDBPath(firefoxProfileDir string) (string, error) {
+	profilesIniPath := filepath.Join(filepath.Dir(firefoxProfileDir), "profiles.ini")
+	if iniData, err := os.ReadFile(profilesIniPath); err == nil {
+		matches := profilePathRegex.FindAllStringSubmatch(string(iniData), -1)
+		for _, profileMatch := range matches {
+			if len(profileMatch) > 1 {
+				profilePath := filepath.Join(filepath.Dir(firefoxProfileDir), profileMatch[1])
+				historyDBPath := filepath.Join(profilePath, "places.sqlite")
+				if _, err := os.Stat(historyDBPath); err == nil {
+					return historyDBPath, nil
 				}
 			}
 		}
 	}
 
-	// Fallback: Search for any profile directory containing places.sqlite
-	profiles, err := filepath.Glob(profileDir + "/*")
-	if err != nil || len(profiles) == 0 {
-		return "", fmt.Errorf("could not find any Firefox profile") // No profiles found
+	profileDirPaths, err := filepath.Glob(firefoxProfileDir + "/*")
+	if err != nil || len(profileDirPaths) == 0 {
+		return "", fmt.Errorf("could not find any Firefox profile in %s", firefoxProfileDir)
 	}
-	for _, profile := range profiles {
-		dbPath := profile + "/places.sqlite"
-		if _, err := os.Stat(dbPath); err == nil { // Check if places.sqlite exists
-			return dbPath, nil // Return the first valid database path
+	for _, profileDirPath := range profileDirPaths {
+		historyDBPath := filepath.Join(profileDirPath, "places.sqlite")
+		if _, err := os.Stat(historyDBPath); err == nil {
+			return historyDBPath, nil
 		}
 	}
-	// No valid profile with places.sqlite found
-	return "", fmt.Errorf("no valid Firefox profile with places.sqlite found")
+	return "", fmt.Errorf("no valid Firefox profile with places.sqlite found in %s", firefoxProfileDir)
 }
 
-// ExtractHistory extracts Firefox history entries from the database within the given time range.
-func (f *FirefoxBrowser) ExtractHistory(dbPath string, startTime, endTime time.Time) ([]HistoryEntry, error) {
-	// Open the SQLite database in read-only mode to avoid locking issues
-	db, err := sql.Open("sqlite3", "file:"+dbPath+"?mode=ro")
+// ExtractHistory extracts Firefox history entries within the given time range.
+func (fb *FirefoxBrowser) ExtractHistory(historyDBPath string, startTime, endTime time.Time) ([]HistoryEntry, error) {
+	db, err := sql.Open("sqlite3", "file:"+historyDBPath+"?mode=ro")
 	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %v", err) // Wrap error with context
+		return nil, fmt.Errorf("failed to open Firefox history database at %s: %v", historyDBPath, err)
 	}
-	defer db.Close() // Ensure the database connection is closed when done
+	defer db.Close()
 
-	// Query joins moz_places and moz_historyvisits to get visit details, sorted by most recent
-	rows, err := db.Query(`
-        SELECT moz_places.url, moz_places.title, moz_historyvisits.visit_date
-        FROM moz_places 
-        JOIN moz_historyvisits ON moz_historyvisits.place_id = moz_places.id
-        WHERE moz_historyvisits.visit_date >= ? AND moz_historyvisits.visit_date <= ?
-        ORDER BY moz_historyvisits.visit_date DESC`,
-		startTime.UnixMicro(), endTime.UnixMicro()) // Firefox uses microseconds since Unix epoch
+	rows, err := db.Query(firefoxHistoryQuery, startTime.UnixMicro(), endTime.UnixMicro())
 	if err != nil {
-		return nil, fmt.Errorf("failed to query database: %v", err) // Wrap error with context
+		return nil, fmt.Errorf("failed to query Firefox history from %s: %v", historyDBPath, err)
 	}
-	defer rows.Close() // Ensure query results are closed when done
+	defer rows.Close()
 
-	// Collect history entries from the query results
 	var entries []HistoryEntry
-	for rows.Next() { // Iterate over each row
-		var url string
-		var title sql.NullString // Handle potentially NULL titles with sql.NullString
-		var timestamp int64
-		// Scan row data into variables
-		if err := rows.Scan(&url, &title, &timestamp); err != nil {
-			return nil, fmt.Errorf("failed to scan row: %v", err) // Wrap error with context
+	for rows.Next() {
+		var pageURL string
+		var pageTitle sql.NullString
+		var visitTimestamp int64
+		if err := rows.Scan(&pageURL, &pageTitle, &visitTimestamp); err != nil {
+			return nil, fmt.Errorf("failed to scan Firefox history row from %s: %v", historyDBPath, err)
 		}
-		// Convert NULL title to empty string if invalid, use string value if valid
-		titleStr := ""
-		if title.Valid {
-			titleStr = title.String
+		title := ""
+		if pageTitle.Valid {
+			title = pageTitle.String
 		}
-		// Create and append the history entry
 		entries = append(entries, HistoryEntry{
-			URL:       url,
-			Title:     titleStr,
-			Timestamp: time.UnixMicro(timestamp), // Convert microseconds to time.Time
+			URL:       pageURL,
+			Title:     title,
+			Timestamp: time.UnixMicro(visitTimestamp),
 		})
 	}
 
-	return entries, nil // Return the collected history entries
+	return entries, nil
 }
