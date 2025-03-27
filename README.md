@@ -29,88 +29,26 @@ Prerequisites
     -   Linux: GCC (sudo apt-get install build-essential on Ubuntu).
         
 
-## Building the Tool
-
-Binaries are built into the bin/ directory with platform-specific names (e.g., go-browser-history-windows-amd64.exe).
-
-Windows
-
-1.  Ensure MinGW-w64’s gcc is in your PATH (test with gcc --version).
-    
-2.  Run the PowerShell build script:
-    
-    powershell
-    
-    ```powershell
-    .\build.ps1
-    ```
-    
-    -   Outputs: bin/go-browser-history-windows-amd64.exe.
-        
-    -   Cross-compilation for macOS/Linux requires additional setup (see below).
-        
-
-macOS/Linux
-
-1.  Ensure GCC is installed.
-    
-2.  Make the Bash script executable:
-    
-    bash
-    
-    ```bash
-    chmod +x build.sh
-    ```
-    
-3.  Run:
-    
-    bash
-    
-    ```bash
-    ./build.sh
-    ```
-    
-    -   Outputs: bin/go-browser-history-<os>-amd64 (e.g., darwin-amd64 for macOS, linux-amd64 for Linux).
-        
-    -   Cross-compilation for Windows requires mingw-w64 (e.g., brew install mingw-w64 on macOS).
-        
-
-Cross-Compilation (Optional)
-
-To build for all platforms from one machine:
-
--   Windows: Install osxcross for macOS and a Linux cross-compiler (e.g., x86_64-linux-gnu-gcc) for Linux.
-    
--   macOS/Linux: Install mingw-w64 for Windows.
-    
--   Update CC variables in the scripts with the correct cross-compiler paths.
-    
--   Alternatively, use Docker:
-    
-    bash
-    
-    ```bash
-    docker run --rm -v $(pwd):/go/src/project -w /go/src/project golang:cross bash -c "GOOS=windows GOARCH=amd64 CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc go build -o bin/go-browser-history-windows-amd64.exe ./cmd/ && GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -o bin/go-browser-history-linux-amd64 ./cmd/ && GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 go build -o bin/go-browser-history-darwin-amd64 ./cmd/"
-    ```
-
-## Testing
+## Building and Testing
 ### Windows
 ```powershell
-.\test.ps1
+.\build-and-test.ps1
 ```
 
-Runs unit tests and functional tests for the Windows binary.
+Builds the Windows binary, runs unit tests, and tests the binary.
 
 macOS/Linux
 
 bash
 
 ```bash
-chmod +x test.sh
-./test.sh
+chmod +x build-and-test.sh
+./build-and-test.sh
 ```
 
-Runs unit tests and functional tests for the native binary. Install jq for JSON validation if needed (brew install jq or sudo apt-get install jq).    
+Builds the native binary, runs unit tests, and tests the binary. Install jq for JSON validation if needed (brew install jq or sudo apt-get install jq).
+
+- Note: The build-and-test scripts have cross compile sections that can be commented in or out for your needs.
 
 ## Usage
 
