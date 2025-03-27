@@ -62,12 +62,10 @@ if ($output) {
 # Test 3: Chrome only, 10 days
 Write-Host "Testing Chrome history (10 days)..."
 $output = & $binary --days 10 --browser chrome
-# Filter out log lines and check remaining output
-$historyOutput = $output -notmatch "Using.*database path"
-if ($historyOutput -and $historyOutput -notmatch "edge" -and $historyOutput -notmatch "firefox") {
+if ($output -and $output -notmatch "\[edge\]" -and $output -notmatch "\[firefox\]") {
     Write-Host "Chrome-only test passed" -ForegroundColor Green
 } else {
-    Write-Host "Chrome-only test failed (unexpected output or no output): $output" -ForegroundColor Red
+    Write-Host "Chrome-only test failed (unexpected output or no output)" -ForegroundColor Red
     exit 1
 }
 
@@ -79,11 +77,11 @@ try {
     if ($json -or $output -eq "[]") {
         Write-Host "JSON output test passed" -ForegroundColor Green
     } else {
-        Write-Host "JSON output test failed (empty or invalid JSON): $output" -ForegroundColor Red
+        Write-Host "JSON output test failed (empty or invalid JSON)" -ForegroundColor Red
         exit 1
     }
 } catch {
-    Write-Host "JSON output test failed (invalid JSON): $output" -ForegroundColor Red
+    Write-Host "JSON output test failed (invalid JSON)" -ForegroundColor Red
     exit 1
 }
 
