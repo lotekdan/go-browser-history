@@ -6,12 +6,19 @@ if (-not (Test-Path $binDir)) {
     New-Item -ItemType Directory -Path $binDir | Out-Null
 }
 
-# Get version from the latest Git tag
-$appVersion = git describe --tags --always 2>$null
-if (-not $appVersion) {
-    # Fallback if Git isn’t available or no tags exist
-    $appVersion = "v0.0.0-dev"
-    Write-Host "Warning: Could not retrieve Git tag, using fallback version: $appVersion" -ForegroundColor Yellow
+# Get the latest Git tag and build number
+$latestTag = git describe --tags --abbrev=0 2>$null
+if (-not $latestTag) {
+    # Fallback if no tags exist
+    $appVersion = "v0.0.0-0"
+    Write-Host "Warning: No Git tags found, using fallback version: $appVersion" -ForegroundColor Yellow
+} else {
+    # Count commits since the latest tag
+    $buildNumber = (git rev-list "$latestTag..HEAD" --count 2>$null)
+    if (-not $buildNumber) {
+        $buildNumber = "0"  # On the tag itself
+    }
+    $appVersion = "$latestTag-$buildNumber"
 }
 
 # Store original CC value
