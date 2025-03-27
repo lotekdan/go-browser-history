@@ -4,12 +4,19 @@ BIN_DIR="bin"
 mkdir -p "$BIN_DIR"
 ORIGINAL_CC="$CC"
 
-# Get version from the latest Git tag
-APP_VERSION=$(git describe --tags --always 2>/dev/null)
-if [ -z "$APP_VERSION" ]; then
-    # Fallback if Git isn’t available or no tags exist
-    APP_VERSION="v0.0.0-dev"
-    echo "Warning: Could not retrieve Git tag, using fallback version: $APP_VERSION" >&2
+# Get the latest Git tag and build number
+LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null)
+if [ -z "$LATEST_TAG" ]; then
+    # Fallback if no tags exist
+    APP_VERSION="v0.0.0-0"
+    echo "Warning: No Git tags found, using fallback version: $APP_VERSION" >&2
+else
+    # Count commits since the latest tag
+    BUILD_NUMBER=$(git rev-list "$LATEST_TAG..HEAD" --count 2>/dev/null)
+    if [ -z "$BUILD_NUMBER" ]; then
+        BUILD_NUMBER="0"  # On the tag itself
+    fi
+    APP_VERSION="$LATEST_TAG-$BUILD_NUMBER"
 fi
 
 OS=$(uname | tr '[:upper:]' '[:lower:]')
@@ -22,7 +29,7 @@ CGO_ENABLED=1 go test ./...
 if [ $? -ne 0 ]; then echo "Unit tests failed" >&2; exit 1; fi
 
 BINARY="$BIN_DIR/go-browser-history-${OS}-amd64"
-if [ ! -f "$BINARY" ]; then echo "Error: Binary not (°found at $BINARY" >&2; exit 1; fi
+if [ ! -f "$BINARY" ]; then echo "Error: Binary not found at $BINARY" >&2; exit 1; fi
 
 echo "Testing version flag..."
 OUTPUT=$($BINARY --version)
