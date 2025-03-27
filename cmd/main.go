@@ -11,6 +11,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var Version string = "dev" //Default version if not set during build
+
 type OutputEntry struct {
 	Timestamp string `json:"timestamp"`
 	Title     string `json:"title"`
@@ -25,8 +27,9 @@ func NewRootCmd() *cobra.Command {
 	var jsonOutput bool
 
 	cmd := &cobra.Command{
-		Use:   "go-browser-history",
-		Short: "Retrieve browser history from Chrome, Edge, or Firefox",
+		Use:     "go-browser-history",
+		Short:   "Retrieve browser history from Chrome, Edge, or Firefox",
+		Version: Version,
 		Run: func(cmd *cobra.Command, args []string) {
 			endTime := time.Now()
 			startTime := endTime.AddDate(0, 0, -days)
