@@ -83,10 +83,10 @@ func (s *HistoryService) OutputResults(entries []history.OutputEntry, jsonOutput
 	if jsonOutput {
 		jsonData, err := json.Marshal(entries)
 		if err != nil {
-			fmt.Fprint(writer, "[]") // Silent failure in JSON mode
+			fmt.Fprintln(writer, "[]") // Include newline on error
 			return
 		}
-		fmt.Fprint(writer, string(jsonData))
+		fmt.Fprintln(writer, string(jsonData)) // Use Fprintln to add newline
 		return
 	}
 
