@@ -10,12 +10,20 @@ import (
 
 var Version string = "dev"
 
+// serverStartFunc allows mocking server.Start in tests
+var serverStartFunc = server.Start
+
 func main() {
+	os.Exit(run())
+}
+
+func run() int {
 	cfg := config.NewDefaultConfig()
 	cfg.Mode = "api"
 
-	if err := server.Start(cfg); err != nil {
+	if err := serverStartFunc(cfg); err != nil {
 		fmt.Fprintf(os.Stderr, "Error starting API server: %v\n", err)
-		os.Exit(1)
+		return 1
 	}
+	return 0
 }

@@ -11,10 +11,13 @@ import (
 	"github.com/lotekdan/go-browser-history/internal/service"
 )
 
+// listenAndServe allows mocking http.ListenAndServe in tests
+var listenAndServe = http.ListenAndServe
+
 func Start(cfg *config.Config) error {
 	srv := service.NewHistoryService()
 	http.HandleFunc("/history", historyHandler(srv, cfg))
-	return http.ListenAndServe(":"+cfg.Port, nil)
+	return listenAndServe(":"+cfg.Port, nil)
 }
 
 func historyHandler(srv *service.HistoryService, cfg *config.Config) http.HandlerFunc {
