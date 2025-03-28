@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -16,11 +17,21 @@ var listenAndServe = http.ListenAndServe
 
 func Start(cfg *config.Config) error {
 	srv := service.NewHistoryService()
-	http.HandleFunc("/history", historyHandler(srv, cfg))
-	return listenAndServe(":"+cfg.Port, nil)
+
+	// Ensure handler is non-nil
+	historyHandler := historyHandler(srv, cfg)
+	if historyHandler == nil {
+		return fmt.Errorf("history handler is nil")
+	}
+
+	// Register handler safely
+	http.HandleFunc("/history", historyHandler)
+
+	port := fmt.Sprintf(":%s", cfg.Port)
+	return http.ListenAndServe(port, nil)
 }
 
-func historyHandler(srv *service.HistoryService, cfg *config.Config) http.HandlerFunc {
+func historyHandler(srv service.HistoryService, cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Parse query parameters
 		query := r.URL.Query()

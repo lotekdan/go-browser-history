@@ -11,12 +11,23 @@ import (
 	"github.com/lotekdan/go-browser-history/internal/history"
 )
 
-type HistoryService struct {
+// Define the HistoryService interface
+type HistoryService interface {
+	GetHistory(cfg *config.Config, selectedBrowsers []string) ([]history.OutputEntry, error)
+	OutputResults(entries []history.OutputEntry, jsonOutput bool, writer io.Writer)
+}
+
+// Concrete implementation of HistoryService
+type historyService struct {
 	browserMap map[string]browser.Browser
 }
 
-func NewHistoryService() *HistoryService {
-	return &HistoryService{
+// Ensure historyService implements the interface
+var _ HistoryService = (*historyService)(nil)
+
+// Constructor function
+func NewHistoryService() HistoryService {
+	return &historyService{
 		browserMap: initializeBrowsers(),
 	}
 }
@@ -29,7 +40,8 @@ func initializeBrowsers() map[string]browser.Browser {
 	}
 }
 
-func (s *HistoryService) GetHistory(cfg *config.Config, selectedBrowsers []string) ([]history.OutputEntry, error) {
+// Implement GetHistory method
+func (s *historyService) GetHistory(cfg *config.Config, selectedBrowsers []string) ([]history.OutputEntry, error) {
 	browserList := s.resolveBrowsers(selectedBrowsers)
 	if len(browserList) == 0 {
 		return nil, fmt.Errorf("no valid browsers specified")
@@ -39,7 +51,7 @@ func (s *HistoryService) GetHistory(cfg *config.Config, selectedBrowsers []strin
 	return s.fetchHistory(cfg, browserList)
 }
 
-func (s *HistoryService) resolveBrowsers(selectedBrowsers []string) []string {
+func (s *historyService) resolveBrowsers(selectedBrowsers []string) []string {
 	if len(selectedBrowsers) == 0 {
 		return []string{"chrome", "edge", "firefox"}
 	}
@@ -52,7 +64,7 @@ func (s *HistoryService) resolveBrowsers(selectedBrowsers []string) []string {
 	return validBrowsers
 }
 
-func (s *HistoryService) fetchHistory(cfg *config.Config, browsers []string) ([]history.OutputEntry, error) {
+func (s *historyService) fetchHistory(cfg *config.Config, browsers []string) ([]history.OutputEntry, error) {
 	var entries []history.OutputEntry
 	for _, name := range browsers {
 		browserImpl := s.browserMap[name]
@@ -79,7 +91,8 @@ func (s *HistoryService) fetchHistory(cfg *config.Config, browsers []string) ([]
 	return entries, nil
 }
 
-func (s *HistoryService) OutputResults(entries []history.OutputEntry, jsonOutput bool, writer io.Writer) {
+// Implement OutputResults method
+func (s *historyService) OutputResults(entries []history.OutputEntry, jsonOutput bool, writer io.Writer) {
 	if jsonOutput {
 		jsonData, err := json.Marshal(entries)
 		if err != nil {
