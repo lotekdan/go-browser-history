@@ -66,7 +66,7 @@ func (cb *ChromeBrowser) ExtractHistory(historyDBPath string, startTime, endTime
 		entries = append(entries, HistoryEntry{
 			URL:       pageURL,
 			Title:     pageTitle,
-			Timestamp: chromeTimeToTime(visitTimestamp),
+			Timestamp: ChromeTimeToTime(visitTimestamp),
 		})
 	}
 
@@ -79,8 +79,8 @@ func TimeToChromeTime(t time.Time) int64 {
 	return t.UnixMicro() + epochDiff
 }
 
-// chromeTimeToTime converts Chrome's timestamp to Go time.Time.
-func chromeTimeToTime(chromeTimestamp int64) time.Time {
+// ChromeTimeToTime converts Chrome's timestamp to Go time.Time.
+func ChromeTimeToTime(chromeTimestamp int64) time.Time {
 	const epochDiff = 11644473600000000
 	return time.UnixMicro(chromeTimestamp - epochDiff)
 }
