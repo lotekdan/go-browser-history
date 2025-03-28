@@ -14,6 +14,8 @@ Features
 -   Cross-platform support: Windows, macOS, Linux.
     
 -   Handles locked history files gracefully.
+
+-   Can run as a webserver to support API requests for history
     
 
 Prerequisites
@@ -62,11 +64,14 @@ go-browser-history [flags]
 Supported Arguments
 
 ```text
-  -b, --browser string   Browser type (chrome, edge, firefox). Leave empty for all browsers
-  -d, --days int         Number of days of history to retrieve (default 30)
-  -h, --help             Show help message
-  -j, --json             Output results in JSON format
-      --version          Show version (set during build, e.g., v1.0.0)
+    -b, --browser strings   Browser types (chrome, edge, firefox)
+    -d, --days int          Number of days of history to retrieve (default 30)
+        --debug             Enable debug logging
+    -h, --help              help for go-browser-history
+    -j, --json              Output results in JSON format (CLI only)
+    -m, --mode string       Run mode: 'cli' (default) or 'api' (default "cli")
+    -p, --port string       Port for API mode (default "8080")
+    -v, --version           version for go-browser-history
 ```
 
 Examples
@@ -95,6 +100,12 @@ Examples
     go-browser-history --version
     ```
     
+    bash
+    
+    ```bash
+    go-browser-history --days 120 --mode api
+    curl "http://localhost:8080/history?browser=chrome&days=10"
+    ```    
 
 Notes
 
