@@ -38,14 +38,14 @@ if ($LASTEXITCODE -ne 0) {
 
 # Run unit tests
 Write-Host "Running unit tests..."
-# go test ./...
-go test ./cmd/api -v --cover
-go test ./internal/browser -v --cover
-go test ./internal/browser -v --cover
-go test ./internal/config -v --cover
-go test ./internal/history -v --cover
-go test ./internal/server -v --cover
-go test ./internal/service -v --cover
+go test ./... -v --cover
+#go test ./cmd/api -v --cover
+#go test ./internal/browser -v --cover
+#go test ./internal/browser -v --cover
+#go test ./internal/config -v --cover
+#go test ./internal/history -v --cover
+#go test ./internal/server -v --cover
+#go test ./internal/service -v --cover
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Unit tests failed" -ForegroundColor Red
     exit 1
