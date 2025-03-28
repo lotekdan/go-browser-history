@@ -55,7 +55,7 @@ func TestStart(t *testing.T) {
 	http.DefaultServeMux = new(http.ServeMux)
 
 	cfg := &config.Config{Port: "8080"}
-	srv := service.NewHistoryService()
+	srv := service.NewHistoryService(nil)
 	handler := historyHandler(srv, cfg)
 
 	// Ensure handler is set up correctly
@@ -78,7 +78,7 @@ func TestStart(t *testing.T) {
 
 func TestStart_ListenAndServeError(t *testing.T) {
 	cfg := &config.Config{Port: "8080"}
-	srv := service.NewHistoryService()
+	srv := service.NewHistoryService(nil)
 	handler := historyHandler(srv, cfg)
 
 	if handler == nil {

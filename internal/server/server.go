@@ -16,7 +16,7 @@ import (
 var listenAndServe = http.ListenAndServe
 
 func Start(cfg *config.Config) error {
-	srv := service.NewHistoryService()
+	srv := service.NewHistoryService(nil)
 
 	// Ensure handler is non-nil
 	historyHandler := historyHandler(srv, cfg)

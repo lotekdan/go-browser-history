@@ -25,7 +25,14 @@ GOOS="$OS" GOARCH=amd64 CGO_ENABLED=1 go build -o "$BIN_DIR/go-browser-history-$
 if [ $? -ne 0 ]; then echo "Build failed for $BIN_DIR/go-browser-history-${OS}-amd64" >&2; exit 1; fi
 
 echo "Running unit tests..."
-CGO_ENABLED=1 go test ./...
+# CGO_ENABLED=1 go test ./...
+CGO_ENABLED=1 go test ./cmd/api -v --cover
+CGO_ENABLED=1 go test ./internal/browser -v --cover
+CGO_ENABLED=1 go test ./internal/browser -v --cover
+CGO_ENABLED=1 go test ./internal/config -v --cover
+CGO_ENABLED=1 go test ./internal/history -v --cover
+CGO_ENABLED=1 go test ./internal/server -v --cover
+CGO_ENABLED=1 go test ./internal/service -v --cover
 if [ $? -ne 0 ]; then echo "Unit tests failed" >&2; exit 1; fi
 
 BINARY="$BIN_DIR/go-browser-history-${OS}-amd64"

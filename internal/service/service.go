@@ -26,9 +26,12 @@ type historyService struct {
 var _ HistoryService = (*historyService)(nil)
 
 // Constructor function
-func NewHistoryService() HistoryService {
+func NewHistoryService(browserMap map[string]browser.Browser) HistoryService {
+	if browserMap == nil {
+		browserMap = initializeBrowsers()
+	}
 	return &historyService{
-		browserMap: initializeBrowsers(),
+		browserMap: browserMap,
 	}
 }
 

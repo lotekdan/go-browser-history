@@ -32,7 +32,7 @@ func main() {
 				}
 			default: // CLI mode
 				cfg.Mode = "cli"
-				historyService := service.NewHistoryService()
+				historyService := service.NewHistoryService(nil)
 				browserList := parseBrowsers(cfg.Browser)
 				entries, err := historyService.GetHistory(cfg, browserList)
 				if err != nil {
