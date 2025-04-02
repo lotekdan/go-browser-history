@@ -99,7 +99,9 @@ Examples
     ```bash
     go-browser-history --version
     ```
-    
+
+-   API Mode:
+
     bash
     
     ```bash

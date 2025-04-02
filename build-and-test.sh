@@ -28,7 +28,6 @@ echo "Running unit tests..."
 CGO_ENABLED=1 go test ./... -v --cover
 #CGO_ENABLED=1 go test ./cmd/api -v --cover
 #CGO_ENABLED=1 go test ./internal/browser -v --cover
-#CGO_ENABLED=1 go test ./internal/browser -v --cover
 #CGO_ENABLED=1 go test ./internal/config -v --cover
 #CGO_ENABLED=1 go test ./internal/history -v --cover
 #CGO_ENABLED=1 go test ./internal/server -v --cover
