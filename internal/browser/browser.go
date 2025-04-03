@@ -50,7 +50,8 @@ func GetBrowserProfilePaths(dir string, browserType string) ([]string, error) {
 	default:
 		for _, entry := range entries {
 			if entry.IsDir() {
-				if strings.Contains(strings.ToLower(entry.Name()), "profile") {
+				if strings.Contains(strings.ToLower(entry.Name()), "profile") ||
+					strings.Contains(strings.ToLower(entry.Name()), "default") {
 					fullPath := filepath.Join(dir, entry.Name())
 					profilePaths = append(profilePaths, fullPath)
 				}
