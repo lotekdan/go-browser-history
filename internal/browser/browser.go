@@ -1,6 +1,11 @@
 package browser
 
-import "time"
+import (
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+)
 
 // HistoryEntry represents a single browser history entry.
 type HistoryEntry struct {
@@ -15,4 +20,47 @@ type Browser interface {
 	GetHistoryPath() (string, error)
 	// ExtractHistory retrieves history entries from the database within the given time range, with optional verbose logging.
 	ExtractHistory(dbPath string, startTime, endTime time.Time, verbose bool) ([]HistoryEntry, error)
+}
+
+func GetBrowserProfilePaths(dir string, browserType string) ([]string, error) {
+	info, err := os.Stat(dir)
+	if err != nil {
+		return nil, err
+	}
+	if !info.IsDir() {
+		return nil, os.ErrInvalid
+	}
+
+	f, err := os.Open(dir)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	entries, err := f.ReadDir(-1)
+	if err != nil {
+		return nil, err
+	}
+
+	var profilePaths []string
+
+	switch browserType {
+	case "firefox":
+		//do something
+	default:
+		for _, entry := range entries {
+			if entry.IsDir() {
+				if strings.Contains(strings.ToLower(entry.Name()), "profile") {
+					fullPath := filepath.Join(dir, entry.Name())
+					profilePaths = append(profilePaths, fullPath)
+				}
+			}
+		}
+
+		if len(profilePaths) == 0 {
+			return nil, os.ErrNotExist
+		}
+
+	}
+	return profilePaths, nil
 }

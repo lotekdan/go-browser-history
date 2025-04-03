@@ -29,10 +29,12 @@ func NewChromeBrowser() Browser {
 func (cb *ChromeBrowser) GetHistoryPath() (string, error) {
 	switch runtime.GOOS {
 	case "windows":
+		fmt.Println(GetBrowserProfilePaths(os.Getenv("LOCALAPPDATA")+"\\Google\\Chrome\\User Data\\Default\\History", "chrome"))
 		return os.Getenv("LOCALAPPDATA") + "\\Google\\Chrome\\User Data\\Default\\History", nil
 	case "darwin":
 		return os.Getenv("HOME") + "/Library/Application Support/Google/Chrome/Default/History", nil
 	case "linux":
+		fmt.Println(GetBrowserProfilePaths(os.Getenv("HOME")+"/.config/google-chrome/", "chrome"))
 		return os.Getenv("HOME") + "/.config/google-chrome/Default/History", nil
 	default:
 		return "", fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
