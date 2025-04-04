@@ -34,18 +34,17 @@ func (fb *FirefoxBrowser) GetHistoryPath() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(fb.GetHistoryPaths(baseDir))
 	return fb.GetHistoryPaths(baseDir)
 }
 
 func (fb *FirefoxBrowser) getFirefoxProfileBaseDir() (string, error) {
 	switch runtime.GOOS {
 	case "windows":
-		return os.Getenv("APPDATA") + "\\Mozilla\\Firefox\\Profiles", nil
+		return os.Getenv("APPDATA") + "\\Mozilla\\Firefox\\Profiles\\", nil
 	case "darwin":
-		return os.Getenv("HOME") + "/Library/Application Support/Firefox/Profiles", nil
+		return os.Getenv("HOME") + "/Library/Application Support/Firefox/Profiles/", nil
 	case "linux":
-		return os.Getenv("HOME") + "/.mozilla/firefox", nil
+		return os.Getenv("HOME") + "/.mozilla/firefox/", nil
 	default:
 		return "", fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
 	}
@@ -53,7 +52,7 @@ func (fb *FirefoxBrowser) getFirefoxProfileBaseDir() (string, error) {
 
 // GetBrowserProfilePaths gets a collection of browser profile history paths.
 func (fb *FirefoxBrowser) GetHistoryPaths(dir string) ([]string, error) {
-	profileIniFile := filepath.Join(filepath.Dir(dir), "profiles.ini")
+	profileIniFile := filepath.Join(dir, "profiles.ini")
 	cfg, err := ini.Load(profileIniFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load profiles.ini: %w", err)
@@ -77,6 +76,10 @@ func (fb *FirefoxBrowser) GetHistoryPaths(dir string) ([]string, error) {
 			path = filepath.Join(dir, path, "places.sqlite")
 		}
 
+		_, err := os.Stat(path)
+		if os.IsNotExist(err) {
+			continue
+		}
 		profiles = append(profiles, path)
 	}
 	return profiles, nil
