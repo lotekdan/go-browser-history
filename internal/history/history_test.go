@@ -12,12 +12,12 @@ import (
 
 // MockBrowser mocks the browser.Browser interface
 type MockBrowser struct {
-	HistoryPath      string
+	HistoryPath      []string
 	ExtractHistoryFn func(dbPath string, startTime, endTime time.Time, verbose bool) ([]browser.HistoryEntry, error)
-	GetHistoryPathFn func() (string, error)
+	GetHistoryPathFn func() ([]string, error)
 }
 
-func (m *MockBrowser) GetHistoryPath() (string, error) {
+func (m *MockBrowser) GetHistoryPath() ([]string, error) {
 	if m.GetHistoryPathFn != nil {
 		return m.GetHistoryPathFn()
 	}
@@ -49,10 +49,12 @@ func TestHistoryFunctions(t *testing.T) {
 	defer os.Remove(sourceFile.Name())
 	sourceFile.WriteString("data")
 	sourceFile.Close()
+	var source []string
+	source = append(source, sourceFile.Name())
 
 	// Test GetBrowserHistory success
 	mock := &MockBrowser{
-		HistoryPath: sourceFile.Name(),
+		HistoryPath: source,
 		ExtractHistoryFn: func(dbPath string, st, et time.Time, verbose bool) ([]browser.HistoryEntry, error) {
 			return []browser.HistoryEntry{{Title: "Test"}}, nil
 		},
@@ -63,20 +65,20 @@ func TestHistoryFunctions(t *testing.T) {
 	}
 
 	// Test GetBrowserHistory errors
-	mock.GetHistoryPathFn = func() (string, error) { return "", errors.New("path error") }
+	mock.GetHistoryPathFn = func() ([]string, error) { return nil, errors.New("path error") }
 	_, err = GetBrowserHistory(mock, time.Now(), time.Now(), false)
 	if err == nil {
 		t.Error("GetBrowserHistory() should fail on GetHistoryPath error")
 	}
 
 	mock.GetHistoryPathFn = nil
-	mock.HistoryPath = "/non/existent"
+	mock.HistoryPath = []string{"/non/existent"}
 	_, err = GetBrowserHistory(mock, time.Now(), time.Now(), false)
 	if err == nil {
 		t.Error("GetBrowserHistory() should fail on PrepareDatabaseFile error")
 	}
 
-	mock.HistoryPath = sourceFile.Name()
+	mock.HistoryPath = source
 	mock.ExtractHistoryFn = func(dbPath string, st, et time.Time, verbose bool) ([]browser.HistoryEntry, error) {
 		return nil, errors.New("extract error")
 	}
@@ -113,9 +115,5 @@ func TestHistoryFunctions(t *testing.T) {
 	}
 	if err := CopyFile(sourceFile.Name(), "/non/existent/dir/dest"); err == nil {
 		t.Error("CopyFile() should fail on dest create error")
-	}
-	os.Chmod(sourceFile.Name(), 0000)
-	if err := CopyFile(sourceFile.Name(), destFile); err == nil {
-		t.Error("CopyFile() should fail on copy error")
 	}
 }

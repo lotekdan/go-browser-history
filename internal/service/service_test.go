@@ -13,13 +13,13 @@ import (
 
 // MockBrowser implements browser.Browser for testing
 type MockBrowser struct {
-	historyPath string
+	historyPath []string
 	entries     []browser.HistoryEntry
 	pathErr     error
 	extractErr  error
 }
 
-func (m *MockBrowser) GetHistoryPath() (string, error) {
+func (m *MockBrowser) GetHistoryPath() ([]string, error) {
 	return m.historyPath, m.pathErr
 }
 
@@ -34,6 +34,7 @@ func TestGetHistory(t *testing.T) {
 	if err := os.WriteFile(tempDBPath, []byte("mock data"), 0644); err != nil {
 		t.Fatalf("Failed to create temp DB file: %v", err)
 	}
+	tempPath := []string{tempDBPath}
 
 	tests := []struct {
 		name             string
@@ -46,7 +47,7 @@ func TestGetHistory(t *testing.T) {
 			name:             "valid browser with no entries",
 			selectedBrowsers: []string{"mock"},
 			mockBrowser: &MockBrowser{
-				historyPath: tempDBPath,
+				historyPath: tempPath,
 				entries:     []browser.HistoryEntry{},
 				pathErr:     nil,
 				extractErr:  nil,
@@ -65,7 +66,7 @@ func TestGetHistory(t *testing.T) {
 			name:             "valid browser with entries",
 			selectedBrowsers: []string{"mock"},
 			mockBrowser: &MockBrowser{
-				historyPath: tempDBPath,
+				historyPath: tempPath,
 				entries: []browser.HistoryEntry{
 					{URL: "http://example.com", Title: "Example", Timestamp: time.Now()},
 				},
@@ -79,7 +80,7 @@ func TestGetHistory(t *testing.T) {
 			name:             "error from GetHistoryPath",
 			selectedBrowsers: []string{"mock"},
 			mockBrowser: &MockBrowser{
-				historyPath: tempDBPath,
+				historyPath: tempPath,
 				entries:     []browser.HistoryEntry{{URL: "http://example.com"}},
 				pathErr:     os.ErrNotExist,
 				extractErr:  nil,
@@ -91,7 +92,7 @@ func TestGetHistory(t *testing.T) {
 			name:             "error from ExtractHistory",
 			selectedBrowsers: []string{"mock"},
 			mockBrowser: &MockBrowser{
-				historyPath: tempDBPath,
+				historyPath: tempPath,
 				entries:     nil,
 				pathErr:     nil,
 				extractErr:  os.ErrInvalid,
