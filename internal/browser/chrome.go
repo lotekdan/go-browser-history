@@ -27,7 +27,7 @@ func NewChromeBrowser() Browser {
 	return &ChromeBrowser{}
 }
 
-// GetHistoryPath retrieves the path to Chrome's history database file.
+// GetHistoryPath retrieves collection of paths to Chrome's history database file.
 func (cb *ChromeBrowser) GetHistoryPath() ([]string, error) {
 	switch runtime.GOOS {
 	case "windows":

@@ -29,6 +29,7 @@ func NewFirefoxBrowser() Browser {
 	return &FirefoxBrowser{}
 }
 
+// GetHistoryPath retrieves collection of paths to Firefox's history database file.
 func (fb *FirefoxBrowser) GetHistoryPath() ([]string, error) {
 	baseDir, err := fb.getFirefoxProfileBaseDir()
 	if err != nil {
@@ -85,6 +86,7 @@ func (fb *FirefoxBrowser) GetHistoryPaths(dir string) ([]string, error) {
 	return profiles, nil
 }
 
+// ExtractHistory gets records from the defined history db and date range.
 func (fb *FirefoxBrowser) ExtractHistory(historyDBPath string, startTime, endTime time.Time, verbose bool) ([]HistoryEntry, error) {
 	db, err := sql.Open("sqlite3", "file:"+historyDBPath+"?mode=ro")
 	if err != nil {
