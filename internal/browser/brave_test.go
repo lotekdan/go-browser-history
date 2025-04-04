@@ -8,14 +8,14 @@ import (
 	"testing"
 )
 
-func TestNewEdgeBrowser(t *testing.T) {
-	browser := NewEdgeBrowser()
-	if _, ok := browser.(*EdgeBrowser); !ok {
-		t.Error("NewEdgeBrowser should return a *EdgeBrowser")
+func TestNewBraveBrowser(t *testing.T) {
+	browser := NewBraveBrowser()
+	if _, ok := browser.(*BraveBrowser); !ok {
+		t.Error("NewBraveBrowser should return a *BraveBrowser")
 	}
 }
 
-func TestEdgeBrowser_GetHistoryPath(t *testing.T) {
+func TestBraveBrowser_GetHistoryPath(t *testing.T) {
 	tests := []struct {
 		name           string
 		setupProfile   bool
@@ -38,19 +38,19 @@ func TestEdgeBrowser_GetHistoryPath(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			eb := &EdgeBrowser{}
+			bb := &BraveBrowser{}
 			tempDir := t.TempDir()
 
 			var baseDir string
 			switch runtime.GOOS {
 			case "windows":
-				baseDir = filepath.Join(tempDir, "Microsoft", "Edge", "User Data")
+				baseDir = filepath.Join(tempDir, "BraveSoftware", "Brave-Browser", "User Data")
 				os.Setenv("LOCALAPPDATA", tempDir)
 			case "darwin":
-				baseDir = filepath.Join(tempDir, "Library", "Application Support", "Microsoft Edge")
+				baseDir = filepath.Join(tempDir, "Library", "Application Support", "BraveSoftware", "Brave-Browser")
 				os.Setenv("HOME", tempDir)
 			case "linux":
-				baseDir = filepath.Join(tempDir, ".config", "microsoft-edge")
+				baseDir = filepath.Join(tempDir, ".config", "BraveSoftware", "Brave-Browser")
 				os.Setenv("HOME", tempDir)
 			default:
 				t.Skipf("Skipping test on unsupported OS: %s", runtime.GOOS)
@@ -69,7 +69,6 @@ func TestEdgeBrowser_GetHistoryPath(t *testing.T) {
 				}
 				file.Close()
 
-				// Debug: Verify directory structure
 				entries, err := os.ReadDir(baseDir)
 				if err != nil {
 					t.Fatalf("Failed to read baseDir: %v", err)
@@ -77,7 +76,7 @@ func TestEdgeBrowser_GetHistoryPath(t *testing.T) {
 				fmt.Printf("baseDir contents: %v\n", entries)
 			}
 
-			paths, err := eb.GetHistoryPath()
+			paths, err := bb.GetHistoryPath()
 			fmt.Printf("paths: %v, err: %v\n", paths, err)
 			if err != nil && tt.expectPaths {
 				t.Errorf("Unexpected error when expecting paths: %v", err)

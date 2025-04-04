@@ -2,6 +2,7 @@ package browser
 
 import (
 	"database/sql"
+	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -19,21 +20,43 @@ func TestNewChromeBrowser(t *testing.T) {
 
 func TestChromeBrowser_GetHistoryPath(t *testing.T) {
 	cb := &ChromeBrowser{}
+	tempDir := t.TempDir()
 
-	// Since we can't modify runtime.GOOS, we'll test the current OS only
-	// For full OS testing, consider using build tags or a mock
+	var baseDir string
+	switch runtime.GOOS {
+	case "windows":
+		baseDir = filepath.Join(tempDir, "Google", "Chrome", "User Data")
+		os.Setenv("LOCALAPPDATA", tempDir)
+	case "darwin":
+		baseDir = filepath.Join(tempDir, "Library", "Application Support", "Google", "Chrome")
+		os.Setenv("HOME", tempDir)
+	case "linux":
+		baseDir = filepath.Join(tempDir, ".config", "google-chrome")
+		os.Setenv("HOME", tempDir)
+	default:
+		t.Skipf("Skipping test on unsupported OS: %s", runtime.GOOS)
+	}
+
+	defaultDir := filepath.Join(baseDir, "Default")
+	if err := os.MkdirAll(defaultDir, 0755); err != nil {
+		t.Fatalf("Failed to create default dir: %v", err)
+	}
+	historyPath := filepath.Join(defaultDir, "History")
+	file, err := os.Create(historyPath)
+	if err != nil {
+		t.Fatalf("Failed to create History file: %v", err)
+	}
+	file.Close()
+
 	paths, err := cb.GetHistoryPath()
-	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
-		if err != nil {
-			t.Errorf("Unexpected error on supported OS %s: %v", runtime.GOOS, err)
-		}
-		if len(paths) == 0 {
-			t.Error("Expected at least one path, got none")
-		}
-	} else {
-		if err == nil {
-			t.Errorf("Expected error on unsupported OS %s, got nil", runtime.GOOS)
-		}
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	if len(paths) == 0 {
+		t.Error("Expected at least one path, got none")
+	}
+	if paths[0] != historyPath {
+		t.Errorf("Expected path %s, got %s", historyPath, paths[0])
 	}
 }
 
