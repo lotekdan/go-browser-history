@@ -5,7 +5,7 @@
 
 Features
 
--   Retrieve history from Chrome, Edge, and Firefox.
+-   Retrieve history from Chrome, Edge, Brave, and Firefox.
     
 -   Filter by time range (e.g., last 30 days).
     
@@ -64,7 +64,7 @@ go-browser-history [flags]
 Supported Arguments
 
 ```text
-    -b, --browser strings   Browser types (chrome, edge, firefox)
+    -b, --browser strings   Browser types (chrome, edge, brave, firefox)
     -d, --days int          Number of days of history to retrieve (default 30)
         --debug             Enable debug logging
     -h, --help              help for go-browser-history
