@@ -29,18 +29,18 @@ func NewFirefoxBrowser() Browser {
 	return &FirefoxBrowser{}
 }
 
-func (fb *FirefoxBrowser) GetHistoryPath() (string, error) {
+func (fb *FirefoxBrowser) GetHistoryPath() ([]string, error) {
 	baseDir, err := fb.getFirefoxProfileBaseDir()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return fb.findHistoryDBPath(baseDir)
+	fmt.Println(fb.GetHistoryPaths(baseDir))
+	return fb.GetHistoryPaths(baseDir)
 }
 
 func (fb *FirefoxBrowser) getFirefoxProfileBaseDir() (string, error) {
 	switch runtime.GOOS {
 	case "windows":
-		fmt.Println(fb.GetHistoryPaths(os.Getenv("APPDATA") + "\\Mozilla\\Firefox\\Profiles"))
 		return os.Getenv("APPDATA") + "\\Mozilla\\Firefox\\Profiles", nil
 	case "darwin":
 		return os.Getenv("HOME") + "/Library/Application Support/Firefox/Profiles", nil
@@ -49,34 +49,6 @@ func (fb *FirefoxBrowser) getFirefoxProfileBaseDir() (string, error) {
 	default:
 		return "", fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
 	}
-}
-
-func (fb *FirefoxBrowser) findHistoryDBPath(firefoxProfileDir string) (string, error) {
-	profilesIniPath := filepath.Join(filepath.Dir(firefoxProfileDir), "profiles.ini")
-	if iniData, err := os.ReadFile(profilesIniPath); err == nil {
-		matches := profilePathRegex.FindAllStringSubmatch(string(iniData), -1)
-		for _, profileMatch := range matches {
-			if len(profileMatch) > 1 {
-				profilePath := filepath.Join(filepath.Dir(firefoxProfileDir), profileMatch[1])
-				historyDBPath := filepath.Join(profilePath, "places.sqlite")
-				if _, err := os.Stat(historyDBPath); err == nil {
-					return historyDBPath, nil
-				}
-			}
-		}
-	}
-
-	profileDirPaths, err := filepath.Glob(firefoxProfileDir + "/*")
-	if err != nil || len(profileDirPaths) == 0 {
-		return "", fmt.Errorf("could not find any Firefox profile in %s", firefoxProfileDir)
-	}
-	for _, profileDirPath := range profileDirPaths {
-		historyDBPath := filepath.Join(profileDirPath, "places.sqlite")
-		if _, err := os.Stat(historyDBPath); err == nil {
-			return historyDBPath, nil
-		}
-	}
-	return "", fmt.Errorf("no valid Firefox profile with places.sqlite found in %s", firefoxProfileDir)
 }
 
 // GetBrowserProfilePaths gets a collection of browser profile history paths.
@@ -102,7 +74,7 @@ func (fb *FirefoxBrowser) GetHistoryPaths(dir string) ([]string, error) {
 		}
 
 		if isRelative {
-			path = filepath.Join(dir, path)
+			path = filepath.Join(dir, path, "places.sqlite")
 		}
 
 		profiles = append(profiles, path)

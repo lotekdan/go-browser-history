@@ -16,18 +16,19 @@ func NewEdgeBrowser() Browser {
 }
 
 // GetHistoryPath retrieves the path to Edge's history database file.
-func (eb *EdgeBrowser) GetHistoryPath() (string, error) {
+func (eb *EdgeBrowser) GetHistoryPath() ([]string, error) {
 	switch runtime.GOOS {
 	case "windows":
-		fmt.Println(eb.GetBrowserProfilePaths(os.Getenv("LOCALAPPDATA") + "\\Microsoft\\Edge\\User Data"))
-		return os.Getenv("LOCALAPPDATA") + "\\Microsoft\\Edge\\User Data\\Default\\History", nil
+		paths, _ := eb.GetHistoryPaths(os.Getenv("LOCALAPPDATA") + "\\Microsoft\\Edge\\User Data")
+		return paths, nil
 	case "darwin":
-		return os.Getenv("HOME") + "/Library/Application Support/Microsoft Edge/Default/History", nil
+		paths, _ := eb.GetHistoryPaths(os.Getenv("HOME") + "/Library/Application Support/Microsoft Edge/Default/History")
+		return paths, nil
 	case "linux":
-		fmt.Println(eb.GetBrowserProfilePaths(os.Getenv("HOME") + "/.config/microsoft-edge/"))
-		return os.Getenv("HOME") + "/.config/microsoft-edge/Default/History", nil
+		paths, _ := eb.GetHistoryPaths(os.Getenv("HOME") + "/.config/microsoft-edge/Default/History")
+		return paths, nil
 	default:
-		return "", fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
+		return nil, fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
 	}
 }
 
@@ -38,7 +39,7 @@ func (eb *EdgeBrowser) ExtractHistory(historyDBPath string, startTime, endTime t
 }
 
 // GetBrowserProfilePaths gets a collection of browser profile history paths, delegating to ChromeBrowser due to shared schema.
-func (eb *EdgeBrowser) GetBrowserProfilePaths(dir string) ([]string, error) {
+func (eb *EdgeBrowser) GetHistoryPaths(dir string) ([]string, error) {
 	chromeBrowser := &ChromeBrowser{}
 	return chromeBrowser.GetHistoryPaths(dir)
 }

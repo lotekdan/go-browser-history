@@ -30,7 +30,7 @@ func ToOutputEntries(entries []browser.HistoryEntry, browserName string) []Outpu
 	return output
 }
 
-func GetBrowserHistory(browserImpl browser.Browser, startTime, endTime time.Time, verbose bool) ([]browser.HistoryEntry, error) {
+/*func GetBrowserHistory(browserImpl browser.Browser, startTime, endTime time.Time, verbose bool) ([]browser.HistoryEntry, error) {
 	sourceDBPath, err := browserImpl.GetHistoryPath()
 	if err != nil {
 		return nil, err // Return error silently unless logged elsewhere
@@ -48,6 +48,30 @@ func GetBrowserHistory(browserImpl browser.Browser, startTime, endTime time.Time
 	}
 
 	return entries, nil
+}*/
+
+func GetBrowserHistory(browserImpl browser.Browser, startTime, endTime time.Time, verbose bool) ([]browser.HistoryEntry, error) {
+	sourceDBPaths, err := browserImpl.GetHistoryPath()
+	if err != nil {
+		return nil, err // Return error silently unless logged elsewhere
+	}
+
+	var history []browser.HistoryEntry
+	for _, sourceDBPath := range sourceDBPaths {
+		historyDBPath, cleanup, err := PrepareDatabaseFile(sourceDBPath, verbose)
+		if err != nil {
+			return nil, fmt.Errorf("failed to prepare database file at %s: %v", sourceDBPath, err)
+		}
+		defer cleanup()
+
+		entries, err := browserImpl.ExtractHistory(historyDBPath, startTime, endTime, verbose)
+		if err != nil {
+			return nil, err
+		}
+
+		history = append(history, entries...)
+	}
+	return history, nil
 }
 
 func PrepareDatabaseFile(sourceDBPath string, verbose bool) (string, func(), error) {

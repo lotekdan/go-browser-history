@@ -28,18 +28,19 @@ func NewChromeBrowser() Browser {
 }
 
 // GetHistoryPath retrieves the path to Chrome's history database file.
-func (cb *ChromeBrowser) GetHistoryPath() (string, error) {
+func (cb *ChromeBrowser) GetHistoryPath() ([]string, error) {
 	switch runtime.GOOS {
 	case "windows":
-		fmt.Println(cb.GetHistoryPaths(os.Getenv("LOCALAPPDATA") + "\\Google\\Chrome\\User Data\\"))
-		return os.Getenv("LOCALAPPDATA") + "\\Google\\Chrome\\User Data\\Default\\History", nil
+		paths, _ := cb.GetHistoryPaths(os.Getenv("LOCALAPPDATA") + "\\Google\\Chrome\\User Data")
+		return paths, nil
 	case "darwin":
-		return os.Getenv("HOME") + "/Library/Application Support/Google/Chrome/Default/History", nil
+		paths, _ := cb.GetHistoryPaths(os.Getenv("HOME") + "/Library/Application Support/Google/Chrome")
+		return paths, nil
 	case "linux":
-		fmt.Println(cb.GetHistoryPaths(os.Getenv("HOME") + "/.config/google-chrome/"))
-		return os.Getenv("HOME") + "/.config/google-chrome/Default/History", nil
+		paths, _ := cb.GetHistoryPaths(os.Getenv("HOME") + "/.config/google-chrome")
+		return paths, nil
 	default:
-		return "", fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
+		return nil, fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
 	}
 }
 
@@ -70,7 +71,7 @@ func (cb *ChromeBrowser) GetHistoryPaths(dir string) ([]string, error) {
 		if entry.IsDir() {
 			if strings.Contains(strings.ToLower(entry.Name()), "profile") ||
 				strings.Contains(strings.ToLower(entry.Name()), "default") {
-				fullPath := filepath.Join(dir, entry.Name())
+				fullPath := filepath.Join(dir, entry.Name(), "History")
 				profilePaths = append(profilePaths, fullPath)
 			}
 		}
