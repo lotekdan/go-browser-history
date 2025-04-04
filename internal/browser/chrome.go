@@ -4,8 +4,10 @@ import (
 	"database/sql" // For SQL database interactions
 	"fmt"          // For formatted output and error messages
 	"os"           // For environment variables
-	"runtime"      // For OS detection
-	"time"         // For time conversions
+	"path/filepath"
+	"runtime" // For OS detection
+	"strings"
+	"time" // For time conversions
 
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
 )
@@ -29,16 +31,54 @@ func NewChromeBrowser() Browser {
 func (cb *ChromeBrowser) GetHistoryPath() (string, error) {
 	switch runtime.GOOS {
 	case "windows":
-		fmt.Println(GetBrowserProfilePaths(os.Getenv("LOCALAPPDATA")+"\\Google\\Chrome\\User Data\\", "chrome"))
+		fmt.Println(cb.GetBrowserProfilePaths(os.Getenv("LOCALAPPDATA") + "\\Google\\Chrome\\User Data\\"))
 		return os.Getenv("LOCALAPPDATA") + "\\Google\\Chrome\\User Data\\Default\\History", nil
 	case "darwin":
 		return os.Getenv("HOME") + "/Library/Application Support/Google/Chrome/Default/History", nil
 	case "linux":
-		fmt.Println(GetBrowserProfilePaths(os.Getenv("HOME")+"/.config/google-chrome/", "chrome"))
+		fmt.Println(cb.GetBrowserProfilePaths(os.Getenv("HOME") + "/.config/google-chrome/"))
 		return os.Getenv("HOME") + "/.config/google-chrome/Default/History", nil
 	default:
 		return "", fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
 	}
+}
+
+func (cb *ChromeBrowser) GetBrowserProfilePaths(dir string) ([]string, error) {
+	info, err := os.Stat(dir)
+	if err != nil {
+		return nil, err
+	}
+	if !info.IsDir() {
+		return nil, os.ErrInvalid
+	}
+
+	f, err := os.Open(dir)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	entries, err := f.ReadDir(-1)
+	if err != nil {
+		return nil, err
+	}
+
+	var profilePaths []string
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			if strings.Contains(strings.ToLower(entry.Name()), "profile") ||
+				strings.Contains(strings.ToLower(entry.Name()), "default") {
+				fullPath := filepath.Join(dir, entry.Name())
+				profilePaths = append(profilePaths, fullPath)
+			}
+		}
+	}
+	if len(profilePaths) == 0 {
+		return nil, os.ErrNotExist
+	}
+
+	return profilePaths, nil
 }
 
 // ExtractHistory extracts Chrome history entries within the given time range.

@@ -19,10 +19,12 @@ func NewEdgeBrowser() Browser {
 func (eb *EdgeBrowser) GetHistoryPath() (string, error) {
 	switch runtime.GOOS {
 	case "windows":
+		fmt.Println(eb.GetBrowserProfilePaths(os.Getenv("LOCALAPPDATA") + "\\Microsoft\\Edge\\User Data"))
 		return os.Getenv("LOCALAPPDATA") + "\\Microsoft\\Edge\\User Data\\Default\\History", nil
 	case "darwin":
 		return os.Getenv("HOME") + "/Library/Application Support/Microsoft Edge/Default/History", nil
 	case "linux":
+		fmt.Println(eb.GetBrowserProfilePaths(os.Getenv("HOME") + "/.config/microsoft-edge/"))
 		return os.Getenv("HOME") + "/.config/microsoft-edge/Default/History", nil
 	default:
 		return "", fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
@@ -33,4 +35,9 @@ func (eb *EdgeBrowser) GetHistoryPath() (string, error) {
 func (eb *EdgeBrowser) ExtractHistory(historyDBPath string, startTime, endTime time.Time, verbose bool) ([]HistoryEntry, error) {
 	chromeBrowser := &ChromeBrowser{}
 	return chromeBrowser.ExtractHistory(historyDBPath, startTime, endTime, verbose)
+}
+
+func (eb *EdgeBrowser) GetBrowserProfilePaths(dir string) ([]string, error) {
+	chromeBrowser := &ChromeBrowser{}
+	return chromeBrowser.GetBrowserProfilePaths(dir)
 }
