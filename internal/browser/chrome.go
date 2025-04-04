@@ -31,20 +31,20 @@ func NewChromeBrowser() Browser {
 func (cb *ChromeBrowser) GetHistoryPath() (string, error) {
 	switch runtime.GOOS {
 	case "windows":
-		fmt.Println(cb.GetBrowserProfilePaths(os.Getenv("LOCALAPPDATA") + "\\Google\\Chrome\\User Data\\"))
+		fmt.Println(cb.GetHistoryPaths(os.Getenv("LOCALAPPDATA") + "\\Google\\Chrome\\User Data\\"))
 		return os.Getenv("LOCALAPPDATA") + "\\Google\\Chrome\\User Data\\Default\\History", nil
 	case "darwin":
 		return os.Getenv("HOME") + "/Library/Application Support/Google/Chrome/Default/History", nil
 	case "linux":
-		fmt.Println(cb.GetBrowserProfilePaths(os.Getenv("HOME") + "/.config/google-chrome/"))
+		fmt.Println(cb.GetHistoryPaths(os.Getenv("HOME") + "/.config/google-chrome/"))
 		return os.Getenv("HOME") + "/.config/google-chrome/Default/History", nil
 	default:
 		return "", fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
 	}
 }
 
-// GetBrowserProfilePaths gets a collection of browser profile paths.
-func (cb *ChromeBrowser) GetBrowserProfilePaths(dir string) ([]string, error) {
+// GetBrowserProfilePaths gets a collection of browser profile history paths.
+func (cb *ChromeBrowser) GetHistoryPaths(dir string) ([]string, error) {
 	info, err := os.Stat(dir)
 	if err != nil {
 		return nil, err

@@ -37,8 +37,8 @@ func (eb *EdgeBrowser) ExtractHistory(historyDBPath string, startTime, endTime t
 	return chromeBrowser.ExtractHistory(historyDBPath, startTime, endTime, verbose)
 }
 
-// GetBrowserProfilePaths gets a collection of browser profile paths, delegating to ChromeBrowser due to shared schema.
+// GetBrowserProfilePaths gets a collection of browser profile history paths, delegating to ChromeBrowser due to shared schema.
 func (eb *EdgeBrowser) GetBrowserProfilePaths(dir string) ([]string, error) {
 	chromeBrowser := &ChromeBrowser{}
-	return chromeBrowser.GetBrowserProfilePaths(dir)
+	return chromeBrowser.GetHistoryPaths(dir)
 }
