@@ -40,7 +40,7 @@ func (fb *FirefoxBrowser) getFirefoxProfileBaseDir() (string, error) {
 	case "windows":
 		return os.Getenv("APPDATA") + "\\Mozilla\\Firefox\\", nil
 	case "darwin":
-		return os.Getenv("HOME") + "/Library/Application Support/Firefox/Profiles/", nil
+		return os.Getenv("HOME") + "/Library/Application Support/Firefox/", nil
 	case "linux":
 		return os.Getenv("HOME") + "/.mozilla/firefox/", nil
 	default:

@@ -1,6 +1,7 @@
 package browser
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -67,9 +68,17 @@ func TestEdgeBrowser_GetHistoryPath(t *testing.T) {
 					t.Fatalf("Failed to create History file: %v", err)
 				}
 				file.Close()
+
+				// Debug: Verify directory structure
+				entries, err := os.ReadDir(baseDir)
+				if err != nil {
+					t.Fatalf("Failed to read baseDir: %v", err)
+				}
+				fmt.Printf("baseDir contents: %v\n", entries)
 			}
 
 			paths, err := eb.GetHistoryPath()
+			fmt.Printf("paths: %v, err: %v\n", paths, err)
 			if err != nil && tt.expectPaths {
 				t.Errorf("Unexpected error when expecting paths: %v", err)
 			}
