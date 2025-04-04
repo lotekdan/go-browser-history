@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -13,8 +12,6 @@ import (
 	"github.com/go-ini/ini"
 	_ "github.com/mattn/go-sqlite3"
 )
-
-var profilePathRegex = regexp.MustCompile(`Path=(.+)$`)
 
 const firefoxHistoryQuery = `
     SELECT moz_places.url, moz_places.title, moz_historyvisits.visit_date

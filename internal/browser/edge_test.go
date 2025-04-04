@@ -18,7 +18,6 @@ func TestEdgeBrowser_GetHistoryPath(t *testing.T) {
 	eb := &EdgeBrowser{}
 	tempDir := t.TempDir()
 
-	// Set up a mock directory structure
 	var baseDir string
 	switch runtime.GOOS {
 	case "windows":
@@ -34,7 +33,6 @@ func TestEdgeBrowser_GetHistoryPath(t *testing.T) {
 		t.Skipf("Skipping test on unsupported OS: %s", runtime.GOOS)
 	}
 
-	// Create a Default directory
 	defaultDir := filepath.Join(baseDir, "Default")
 	if err := os.MkdirAll(defaultDir, 0755); err != nil {
 		t.Fatalf("Failed to create default dir: %v", err)
