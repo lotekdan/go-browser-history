@@ -20,7 +20,7 @@ func main() {
 
 	rootCmd := &cobra.Command{
 		Use:   "go-browser-history",
-		Short: "Retrieve browser history from Chrome, Edge, or Firefox",
+		Short: "Retrieve browser history from Chrome, Edge, Brave, or Firefox",
 		Run: func(cmd *cobra.Command, args []string) {
 			cfg.Browser = strings.Join(browsers, ",")
 			switch mode {

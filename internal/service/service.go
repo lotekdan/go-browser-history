@@ -57,7 +57,7 @@ func (s *historyService) GetHistory(cfg *config.Config, selectedBrowsers []strin
 
 func (s *historyService) resolveBrowsers(selectedBrowsers []string) []string {
 	if len(selectedBrowsers) == 0 {
-		return []string{"chrome", "edge", "firefox"}
+		return []string{"chrome", "edge", "brave", "firefox"}
 	}
 	var validBrowsers []string
 	for _, name := range selectedBrowsers {
