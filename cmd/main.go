@@ -48,7 +48,7 @@ func main() {
 		},
 	}
 	rootCmd.Flags().IntVarP(&cfg.HistoryDays, "days", "d", cfg.HistoryDays, "Number of days of history to retrieve")
-	rootCmd.Flags().StringSliceVarP(&browsers, "browser", "b", nil, "Browser types (chrome, edge, firefox)")
+	rootCmd.Flags().StringSliceVarP(&browsers, "browser", "b", nil, "Browser types (chrome, edge, firefox, brave)")
 	rootCmd.Flags().BoolVarP(&cfg.JSONOutput, "json", "j", false, "Output results in JSON format (CLI only)")
 	rootCmd.Flags().StringVarP(&mode, "mode", "m", "cli", "Run mode: 'cli' (default) or 'api'")
 	rootCmd.Flags().StringVarP(&cfg.Port, "port", "p", cfg.Port, "Port for API mode")
