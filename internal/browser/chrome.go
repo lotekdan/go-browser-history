@@ -43,6 +43,7 @@ func (cb *ChromeBrowser) GetHistoryPath() (string, error) {
 	}
 }
 
+// GetBrowserProfilePaths gets a collection of browser profile paths.
 func (cb *ChromeBrowser) GetBrowserProfilePaths(dir string) ([]string, error) {
 	info, err := os.Stat(dir)
 	if err != nil {

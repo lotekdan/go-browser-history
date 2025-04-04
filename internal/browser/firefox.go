@@ -76,6 +76,34 @@ func (fb *FirefoxBrowser) findHistoryDBPath(firefoxProfileDir string) (string, e
 	return "", fmt.Errorf("no valid Firefox profile with places.sqlite found in %s", firefoxProfileDir)
 }
 
+func (fb *FirefoxBrowser) GetBrowserProfilePaths(firefoxProfileDir string) (string, error) {
+	profilesIniPath := filepath.Join(filepath.Dir(firefoxProfileDir), "profiles.ini")
+	if iniData, err := os.ReadFile(profilesIniPath); err == nil {
+		matches := profilePathRegex.FindAllStringSubmatch(string(iniData), -1)
+		for _, profileMatch := range matches {
+			if len(profileMatch) > 1 {
+				profilePath := filepath.Join(filepath.Dir(firefoxProfileDir), profileMatch[1])
+				historyDBPath := filepath.Join(profilePath, "places.sqlite")
+				if _, err := os.Stat(historyDBPath); err == nil {
+					return historyDBPath, nil
+				}
+			}
+		}
+	}
+
+	profileDirPaths, err := filepath.Glob(firefoxProfileDir + "/*")
+	if err != nil || len(profileDirPaths) == 0 {
+		return "", fmt.Errorf("could not find any Firefox profile in %s", firefoxProfileDir)
+	}
+	for _, profileDirPath := range profileDirPaths {
+		historyDBPath := filepath.Join(profileDirPath, "places.sqlite")
+		if _, err := os.Stat(historyDBPath); err == nil {
+			return historyDBPath, nil
+		}
+	}
+	return "", fmt.Errorf("no valid Firefox profile with places.sqlite found in %s", firefoxProfileDir)
+}
+
 func (fb *FirefoxBrowser) ExtractHistory(historyDBPath string, startTime, endTime time.Time, verbose bool) ([]HistoryEntry, error) {
 	db, err := sql.Open("sqlite3", "file:"+historyDBPath+"?mode=ro")
 	if err != nil {
