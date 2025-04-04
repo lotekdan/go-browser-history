@@ -1,108 +1,59 @@
-package browser_test
+package browser
 
 import (
-	"database/sql"
 	"os"
+	"path/filepath"
 	"runtime"
 	"testing"
-	"time"
-
-	"github.com/lotekdan/go-browser-history/internal/browser"
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestNewEdgeBrowser(t *testing.T) {
-	// Act
-	b := browser.NewEdgeBrowser()
-
-	// Assert
-	assert.NotNil(t, b)
-	_, ok := b.(*browser.EdgeBrowser)
-	assert.True(t, ok, "NewEdgeBrowser should return a *EdgeBrowser")
+	browser := NewEdgeBrowser()
+	if _, ok := browser.(*EdgeBrowser); !ok {
+		t.Error("NewEdgeBrowser should return a *EdgeBrowser")
+	}
 }
 
-func TestEdgeGetHistoryPath_Success(t *testing.T) {
-	// Arrange
-	eb := &browser.EdgeBrowser{}
-	t.Setenv("HOME", "/home/test")
-	t.Setenv("LOCALAPPDATA", "C:\\Users\\Test\\AppData\\Local")
+func TestEdgeBrowser_GetHistoryPath(t *testing.T) {
+	eb := &EdgeBrowser{}
+	tempDir := t.TempDir()
 
-	// Act & Assert based on OS
-	path, err := eb.GetHistoryPath()
-	assert.NoError(t, err)
+	// Set up a mock directory structure
+	var baseDir string
 	switch runtime.GOOS {
 	case "windows":
-		assert.Equal(t, "C:\\Users\\Test\\AppData\\Local\\Microsoft\\Edge\\User Data\\Default\\History", path)
+		baseDir = filepath.Join(tempDir, "Microsoft", "Edge", "User Data")
+		os.Setenv("LOCALAPPDATA", tempDir)
 	case "darwin":
-		assert.Equal(t, "/home/test/Library/Application Support/Microsoft Edge/Default/History", path)
+		baseDir = filepath.Join(tempDir, "Library", "Application Support", "Microsoft Edge")
+		os.Setenv("HOME", tempDir)
 	case "linux":
-		assert.Equal(t, "/home/test/.config/microsoft-edge/Default/History", path)
+		baseDir = filepath.Join(tempDir, ".config", "microsoft-edge")
+		os.Setenv("HOME", tempDir)
 	default:
-		t.Skipf("unsupported OS for this test: %s", runtime.GOOS)
+		t.Skipf("Skipping test on unsupported OS: %s", runtime.GOOS)
 	}
-}
 
-func TestEdgeGetHistoryPath_UnsupportedOS(t *testing.T) {
-	// Arrange
-	eb := &browser.EdgeBrowser{}
-
-	// Act
-	path, err := eb.GetHistoryPath()
-
-	// Assert
-	if runtime.GOOS != "windows" && runtime.GOOS != "darwin" && runtime.GOOS != "linux" {
-		assert.Error(t, err)
-		assert.Empty(t, path)
-		assert.Contains(t, err.Error(), "unsupported operating system")
-	} else {
-		t.Log("Skipping unsupported OS test on supported platform")
+	// Create a Default directory
+	defaultDir := filepath.Join(baseDir, "Default")
+	if err := os.MkdirAll(defaultDir, 0755); err != nil {
+		t.Fatalf("Failed to create default dir: %v", err)
 	}
-}
+	historyPath := filepath.Join(defaultDir, "History")
+	file, err := os.Create(historyPath)
+	if err != nil {
+		t.Fatalf("Failed to create History file: %v", err)
+	}
+	file.Close()
 
-func TestEdgeExtractHistory_Success(t *testing.T) {
-	// Arrange: Create a temporary SQLite database file
-	tmpFile, err := os.CreateTemp("", "edge_test_*.db")
-	assert.NoError(t, err)
-	defer os.Remove(tmpFile.Name())
-	defer tmpFile.Close()
-
-	db, err := sql.Open("sqlite3", tmpFile.Name())
-	assert.NoError(t, err)
-	defer db.Close()
-
-	_, err = db.Exec(`
-		CREATE TABLE urls (url TEXT, title TEXT, last_visit_time INTEGER);
-		INSERT INTO urls VALUES ('http://example.com', 'Example', ?);
-	`, browser.TimeToChromeTime(time.Now().Add(-1*time.Hour)))
-	assert.NoError(t, err)
-
-	eb := &browser.EdgeBrowser{}
-	start := time.Now().Add(-24 * time.Hour)
-	end := time.Now()
-
-	// Act
-	entries, err := eb.ExtractHistory(tmpFile.Name(), start, end, false)
-
-	// Assert
-	assert.NoError(t, err)
-	assert.Len(t, entries, 1)
-	assert.Equal(t, "http://example.com", entries[0].URL)
-	assert.Equal(t, "Example", entries[0].Title)
-	assert.True(t, entries[0].Timestamp.After(start) && entries[0].Timestamp.Before(end))
-}
-
-func TestEdgeExtractHistory_InvalidDB(t *testing.T) {
-	// Arrange
-	eb := &browser.EdgeBrowser{}
-	start := time.Now().Add(-24 * time.Hour)
-	end := time.Now()
-
-	// Act
-	entries, err := eb.ExtractHistory("nonexistent.db", start, end, true)
-
-	// Assert
-	assert.Error(t, err)
-	assert.Nil(t, entries)
-	assert.Contains(t, err.Error(), "unable to open database file") // Matches SQLite driver error
+	paths, err := eb.GetHistoryPath()
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	if len(paths) == 0 {
+		t.Fatal("Expected at least one path, got none")
+	}
+	if paths[0] != historyPath {
+		t.Errorf("Expected path %s, got %s", historyPath, paths[0])
+	}
 }

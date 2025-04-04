@@ -1,8 +1,6 @@
 package browser
 
-import (
-	"time"
-)
+import "time"
 
 // HistoryEntry represents a single browser history entry.
 type HistoryEntry struct {
