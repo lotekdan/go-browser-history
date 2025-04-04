@@ -41,7 +41,6 @@ Write-Host "Running unit tests..."
 go test ./... -v --cover
 #go test ./cmd/api -v --cover
 #go test ./internal/browser -v --cover
-#go test ./internal/browser -v --cover
 #go test ./internal/config -v --cover
 #go test ./internal/history -v --cover
 #go test ./internal/server -v --cover
