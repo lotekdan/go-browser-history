@@ -19,14 +19,11 @@ func NewEdgeBrowser() Browser {
 func (eb *EdgeBrowser) GetHistoryPath() ([]string, error) {
 	switch runtime.GOOS {
 	case "windows":
-		paths, _ := eb.GetHistoryPaths(os.Getenv("LOCALAPPDATA") + "\\Microsoft\\Edge\\User Data")
-		return paths, nil
+		return eb.GetHistoryPaths(os.Getenv("LOCALAPPDATA") + "\\Microsoft\\Edge\\User Data")
 	case "darwin":
-		paths, _ := eb.GetHistoryPaths(os.Getenv("HOME") + "/Library/Application Support/Microsoft Edge")
-		return paths, nil
+		return eb.GetHistoryPaths(os.Getenv("HOME") + "/Library/Application Support/Microsoft Edge")
 	case "linux":
-		paths, _ := eb.GetHistoryPaths(os.Getenv("HOME") + "/.config/microsoft-edge/")
-		return paths, nil
+		return eb.GetHistoryPaths(os.Getenv("HOME") + "/.config/microsoft-edge/")
 	default:
 		return nil, fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
 	}

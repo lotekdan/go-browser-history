@@ -40,6 +40,7 @@ func initializeBrowsers() map[string]browser.Browser {
 		"chrome":  browser.NewChromeBrowser(),
 		"edge":    browser.NewEdgeBrowser(),
 		"firefox": browser.NewFirefoxBrowser(),
+		"brave":   browser.NewBraveBrowser(),
 	}
 }
 
