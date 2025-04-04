@@ -40,7 +40,7 @@ func (fb *FirefoxBrowser) GetHistoryPath() ([]string, error) {
 func (fb *FirefoxBrowser) getFirefoxProfileBaseDir() (string, error) {
 	switch runtime.GOOS {
 	case "windows":
-		return os.Getenv("APPDATA") + "\\Mozilla\\Firefox\\Profiles\\", nil
+		return os.Getenv("APPDATA") + "\\Mozilla\\Firefox\\", nil
 	case "darwin":
 		return os.Getenv("HOME") + "/Library/Application Support/Firefox/Profiles/", nil
 	case "linux":

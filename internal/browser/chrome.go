@@ -69,7 +69,7 @@ func (cb *ChromeBrowser) GetHistoryPaths(dir string) ([]string, error) {
 
 	for _, entry := range entries {
 		if entry.IsDir() {
-			if strings.Contains(strings.ToLower(entry.Name()), "profile") ||
+			if strings.HasPrefix(strings.ToLower(entry.Name()), "profile") ||
 				strings.Contains(strings.ToLower(entry.Name()), "default") {
 				fullPath := filepath.Join(dir, entry.Name(), "History")
 				profilePaths = append(profilePaths, fullPath)
