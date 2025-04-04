@@ -24,7 +24,7 @@ Prerequisites
     
 -   GCC: Required for CGO (SQLite dependency).
     
-    -   Windows: MinGW-w64 (e.g., via MSYS2: pacman -S mingw-w64-x86_64-gcc).
+    -   Windows: MinGW-w64 ([Download winlibs-x86_64-posix-seh-gcc-14.2.0](https://github.com/brechtsanders/winlibs_mingw/releases/download/14.2.0posix-19.1.7-12.0.0-msvcrt-r3/winlibs-x86_64-posix-seh-gcc-14.2.0-mingw-w64msvcrt-12.0.0-r3.zip)).
         
     -   macOS: Xcode command-line tools (xcode-select --install).
         
