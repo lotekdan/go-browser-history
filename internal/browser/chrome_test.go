@@ -72,14 +72,27 @@ func TestChromeBrowser_ExtractHistory(t *testing.T) {
 
 	_, err = db.Exec(`
         CREATE TABLE urls (
+            id INTEGER PRIMARY KEY,
             url TEXT,
             title TEXT,
+            visit_count INTEGER,
+            typed_count INTEGER,
             last_visit_time INTEGER
         );
+        CREATE TABLE visits (
+            id INTEGER PRIMARY KEY,
+            url INTEGER,
+            visit_time INTEGER,
+            transition INTEGER
+        );
         INSERT INTO urls VALUES 
-            ('https://test.com', 'Test', ?),
-            ('https://example.com', 'Example', ?);
-    `, TimeToChromeTime(time.Now().Add(-1*time.Hour)), TimeToChromeTime(time.Now()))
+            (1, 'https://test.com', 'Test', 2, 1, ?),
+            (2, 'https://example.com', 'Example', 1, 0, ?);
+        INSERT INTO visits VALUES 
+            (1, 1, ?, 1),
+            (2, 2, ?, 8);
+    `, TimeToChromeTime(time.Now().Add(-1*time.Hour)), TimeToChromeTime(time.Now()),
+		TimeToChromeTime(time.Now().Add(-1*time.Hour)), TimeToChromeTime(time.Now()))
 	if err != nil {
 		t.Fatalf("Failed to setup test data: %v", err)
 	}
