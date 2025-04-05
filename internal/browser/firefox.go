@@ -14,10 +14,27 @@ import (
 )
 
 const firefoxHistoryQuery = `
-    SELECT moz_places.url, moz_places.title, moz_historyvisits.visit_date
-    FROM moz_places 
-    JOIN moz_historyvisits ON moz_historyvisits.place_id = moz_places.id
-    WHERE moz_historyvisits.visit_date >= ? AND moz_historyvisits.visit_date <= ?
+	SELECT
+		moz_places.url, 
+		moz_places.title, 
+		moz_places.visit_count, 
+		moz_places.typed, 
+		CASE moz_historyvisits.visit_type
+        	WHEN 1 THEN 'TRANSITION_LINK'
+        	WHEN 2 THEN 'TRANSITION_TYPED'
+        	WHEN 3 THEN 'TRANSITION_BOOKMARK'
+			WHEN 4 THEN 'TRANSITION_EMBED'
+			WHEN 5 THEN 'TRANSITION_REDIRECT_PERMANENT'
+			WHEN 6 THEN 'TRANSITION_REDIRECT_TEMPORARY'
+			WHEN 7 THEN 'TRANSITION_DOWNLOAD'
+			WHEN 8 THEN 'TRANSITION_FRAMED_LINK'
+			WHEN 9 THEN 'TRANSITION_RELOAD'
+        ELSE 'UNKNOWN (' || moz_historyvisits.visit_type || ')'
+		END AS visit_day_desc, 
+		moz_historyvisits.visit_date 
+		FROM moz_places
+    	JOIN moz_historyvisits ON moz_historyvisits.place_id = moz_places.id
+		WHERE moz_historyvisits.visit_date >= ? AND moz_historyvisits.visit_date <= ?
     ORDER BY moz_historyvisits.visit_date DESC`
 
 type FirefoxBrowser struct{}
@@ -103,10 +120,18 @@ func (fb *FirefoxBrowser) ExtractHistory(historyDBPath string, startTime, endTim
 
 	var entries []HistoryEntry
 	for rows.Next() {
-		var pageURL string
+		var pageURL, pageVisitType string
+		var pageVisitCount, pageTyped int
 		var pageTitle sql.NullString
 		var visitTimestamp int64
-		if err := rows.Scan(&pageURL, &pageTitle, &visitTimestamp); err != nil {
+		//var ProfileName string
+		if err := rows.Scan(
+			&pageURL,
+			&pageTitle,
+			&pageVisitCount,
+			&pageTyped,
+			&pageVisitType,
+			&visitTimestamp); err != nil {
 			return nil, fmt.Errorf("failed to scan Firefox history row from %s: %v", historyDBPath, err)
 		}
 		title := ""
@@ -114,9 +139,12 @@ func (fb *FirefoxBrowser) ExtractHistory(historyDBPath string, startTime, endTim
 			title = pageTitle.String
 		}
 		entries = append(entries, HistoryEntry{
-			URL:       pageURL,
-			Title:     title,
-			Timestamp: time.UnixMicro(visitTimestamp),
+			URL:        pageURL,
+			Title:      title,
+			VisitCount: pageVisitCount,
+			Typed:      pageTyped,
+			VisitType:  pageVisitType,
+			Timestamp:  time.UnixMicro(visitTimestamp),
 		})
 	}
 	if err := rows.Err(); err != nil {
