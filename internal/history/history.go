@@ -11,10 +11,13 @@ import (
 )
 
 type OutputEntry struct {
-	Timestamp string `json:"timestamp"`
-	Title     string `json:"title"`
-	URL       string `json:"url"`
-	Browser   string `json:"browser"`
+	Timestamp  string `json:"timestamp"`
+	Title      string `json:"title"`
+	URL        string `json:"url"`
+	VisitCount int    `json:"visitcount"`
+	Typed      int    `json:"typed"`
+	VisitType  string `json:"visittype"`
+	Browser    string `json:"browser"`
 }
 
 func ToOutputEntries(entries []browser.HistoryEntry, browserName string) []OutputEntry {
