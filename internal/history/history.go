@@ -24,10 +24,13 @@ func ToOutputEntries(entries []browser.HistoryEntry, browserName string) []Outpu
 	var output []OutputEntry
 	for _, entry := range entries {
 		output = append(output, OutputEntry{
-			Timestamp: entry.Timestamp.Format(time.RFC3339),
-			Title:     entry.Title,
-			URL:       entry.URL,
-			Browser:   browserName,
+			Timestamp:  entry.Timestamp.Format(time.RFC3339),
+			Title:      entry.Title,
+			URL:        entry.URL,
+			VisitCount: entry.VisitCount,
+			Typed:      entry.Typed,
+			VisitType:  entry.VisitType,
+			Browser:    browserName,
 		})
 	}
 	return output
