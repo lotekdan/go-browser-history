@@ -72,7 +72,7 @@ func (s *historyService) fetchHistory(cfg *config.Config, browsers []string) ([]
 	var entries []history.OutputEntry
 	for _, name := range browsers {
 		browserImpl := s.browserMap[name]
-		historyDBPath, err := browserImpl.GetHistoryPath()
+		historyDBPath, err := browserImpl.GetHistoryPaths()
 		if err != nil {
 			if shouldLog(cfg) {
 				fmt.Fprintf(os.Stderr, "Debug: Error finding %s history file: %v\n", name, err)

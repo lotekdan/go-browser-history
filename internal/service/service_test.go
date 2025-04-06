@@ -13,14 +13,14 @@ import (
 
 // MockBrowser implements browser.Browser for testing
 type MockBrowser struct {
-	historyPath []string
-	entries     []browser.HistoryEntry
-	pathErr     error
-	extractErr  error
+	historyPaths []string
+	entries      []browser.HistoryEntry
+	pathErr      error
+	extractErr   error
 }
 
-func (m *MockBrowser) GetHistoryPath() ([]string, error) {
-	return m.historyPath, m.pathErr
+func (m *MockBrowser) GetHistoryPaths() ([]string, error) {
+	return m.historyPaths, m.pathErr
 }
 
 func (m *MockBrowser) ExtractHistory(dbPath string, startTime, endTime time.Time, debug bool) ([]browser.HistoryEntry, error) {
@@ -47,10 +47,10 @@ func TestGetHistory(t *testing.T) {
 			name:             "valid browser with no entries",
 			selectedBrowsers: []string{"mock"},
 			mockBrowser: &MockBrowser{
-				historyPath: tempPath,
-				entries:     []browser.HistoryEntry{},
-				pathErr:     nil,
-				extractErr:  nil,
+				historyPaths: tempPath,
+				entries:      []browser.HistoryEntry{},
+				pathErr:      nil,
+				extractErr:   nil,
 			},
 			wantEntries: 0,
 			wantErr:     false,
@@ -66,7 +66,7 @@ func TestGetHistory(t *testing.T) {
 			name:             "valid browser with entries",
 			selectedBrowsers: []string{"mock"},
 			mockBrowser: &MockBrowser{
-				historyPath: tempPath,
+				historyPaths: tempPath,
 				entries: []browser.HistoryEntry{
 					{URL: "http://example.com", Title: "Example", Timestamp: time.Now()},
 				},
@@ -80,10 +80,10 @@ func TestGetHistory(t *testing.T) {
 			name:             "error from GetHistoryPath",
 			selectedBrowsers: []string{"mock"},
 			mockBrowser: &MockBrowser{
-				historyPath: tempPath,
-				entries:     []browser.HistoryEntry{{URL: "http://example.com"}},
-				pathErr:     os.ErrNotExist,
-				extractErr:  nil,
+				historyPaths: tempPath,
+				entries:      []browser.HistoryEntry{{URL: "http://example.com"}},
+				pathErr:      os.ErrNotExist,
+				extractErr:   nil,
 			},
 			wantEntries: 0,
 			wantErr:     false, // fetchHistory continues on error, so no error returned
@@ -92,10 +92,10 @@ func TestGetHistory(t *testing.T) {
 			name:             "error from ExtractHistory",
 			selectedBrowsers: []string{"mock"},
 			mockBrowser: &MockBrowser{
-				historyPath: tempPath,
-				entries:     nil,
-				pathErr:     nil,
-				extractErr:  os.ErrInvalid,
+				historyPaths: tempPath,
+				entries:      nil,
+				pathErr:      nil,
+				extractErr:   os.ErrInvalid,
 			},
 			wantEntries: 0,
 			wantErr:     false, // fetchHistory continues on error

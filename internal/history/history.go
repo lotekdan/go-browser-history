@@ -38,7 +38,7 @@ func ToOutputEntries(entries []browser.HistoryEntry, browserName string) []Outpu
 
 // GetBrowserHistory retrieves history from the browsers profiles and pulls them into a final result.
 func GetBrowserHistory(browserImpl browser.Browser, startTime, endTime time.Time, verbose bool) ([]browser.HistoryEntry, error) {
-	sourceDBPaths, err := browserImpl.GetHistoryPath()
+	sourceDBPaths, err := browserImpl.GetHistoryPaths()
 	if err != nil {
 		return nil, err // Return error silently unless logged elsewhere
 	}

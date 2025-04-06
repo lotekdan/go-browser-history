@@ -12,14 +12,14 @@ import (
 
 // MockBrowser mocks the browser.Browser interface
 type MockBrowser struct {
-	HistoryPath      []string
-	ExtractHistoryFn func(dbPath string, startTime, endTime time.Time, verbose bool) ([]browser.HistoryEntry, error)
-	GetHistoryPathFn func() ([]string, error)
+	HistoryPath       []string
+	ExtractHistoryFn  func(dbPath string, startTime, endTime time.Time, verbose bool) ([]browser.HistoryEntry, error)
+	GetHistoryPathsFn func() ([]string, error)
 }
 
-func (m *MockBrowser) GetHistoryPath() ([]string, error) {
-	if m.GetHistoryPathFn != nil {
-		return m.GetHistoryPathFn()
+func (m *MockBrowser) GetHistoryPaths() ([]string, error) {
+	if m.GetHistoryPathsFn != nil {
+		return m.GetHistoryPathsFn()
 	}
 	return m.HistoryPath, nil
 }
@@ -65,13 +65,13 @@ func TestHistoryFunctions(t *testing.T) {
 	}
 
 	// Test GetBrowserHistory errors
-	mock.GetHistoryPathFn = func() ([]string, error) { return nil, errors.New("path error") }
+	mock.GetHistoryPathsFn = func() ([]string, error) { return nil, errors.New("path error") }
 	_, err = GetBrowserHistory(mock, time.Now(), time.Now(), false)
 	if err == nil {
 		t.Error("GetBrowserHistory() should fail on GetHistoryPath error")
 	}
 
-	mock.GetHistoryPathFn = nil
+	mock.GetHistoryPathsFn = nil
 	mock.HistoryPath = []string{"/non/existent"}
 	_, err = GetBrowserHistory(mock, time.Now(), time.Now(), false)
 	if err == nil {

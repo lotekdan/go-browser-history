@@ -77,7 +77,7 @@ func TestEdgeBrowser_GetHistoryPath(t *testing.T) {
 				fmt.Printf("baseDir contents: %v\n", entries)
 			}
 
-			paths, err := eb.GetHistoryPath()
+			paths, err := eb.GetHistoryPaths()
 			fmt.Printf("paths: %v, err: %v\n", paths, err)
 			if err != nil && tt.expectPaths {
 				t.Errorf("Unexpected error when expecting paths: %v", err)

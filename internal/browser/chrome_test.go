@@ -48,7 +48,7 @@ func TestChromeBrowser_GetHistoryPath(t *testing.T) {
 	}
 	file.Close()
 
-	paths, err := cb.GetHistoryPath()
+	paths, err := cb.GetHistoryPaths()
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}

@@ -44,12 +44,12 @@ func NewFirefoxBrowser() Browser {
 }
 
 // GetHistoryPath retrieves collection of paths to Firefox's history database file.
-func (fb *FirefoxBrowser) GetHistoryPath() ([]string, error) {
+func (fb *FirefoxBrowser) GetHistoryPaths() ([]string, error) {
 	baseDir, err := fb.getFirefoxProfileBaseDir()
 	if err != nil {
 		return nil, err
 	}
-	return fb.GetHistoryPaths(baseDir)
+	return fb.getPaths(baseDir)
 }
 
 func (fb *FirefoxBrowser) getFirefoxProfileBaseDir() (string, error) {
@@ -66,7 +66,7 @@ func (fb *FirefoxBrowser) getFirefoxProfileBaseDir() (string, error) {
 }
 
 // GetBrowserProfilePaths gets a collection of browser profile history paths.
-func (fb *FirefoxBrowser) GetHistoryPaths(dir string) ([]string, error) {
+func (fb *FirefoxBrowser) getPaths(dir string) ([]string, error) {
 	profileIniFile := filepath.Join(dir, "profiles.ini")
 	cfg, err := ini.Load(profileIniFile)
 	if err != nil {

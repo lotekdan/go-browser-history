@@ -41,7 +41,7 @@ func TestFirefoxBrowser_GetHistoryPath(t *testing.T) {
 	}
 	file.Close() // Explicitly close the file to avoid lock
 
-	paths, err := fb.GetHistoryPaths(tempDir)
+	paths, err := fb.getPaths(tempDir)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}

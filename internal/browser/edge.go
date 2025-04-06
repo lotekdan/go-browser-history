@@ -16,14 +16,14 @@ func NewEdgeBrowser() Browser {
 }
 
 // GetHistoryPath retrieves the path to Edge's history database file.
-func (eb *EdgeBrowser) GetHistoryPath() ([]string, error) {
+func (eb *EdgeBrowser) GetHistoryPaths() ([]string, error) {
 	switch runtime.GOOS {
 	case "windows":
-		return eb.GetHistoryPaths(os.Getenv("LOCALAPPDATA") + "\\Microsoft\\Edge\\User Data")
+		return eb.getPaths(os.Getenv("LOCALAPPDATA") + "\\Microsoft\\Edge\\User Data")
 	case "darwin":
-		return eb.GetHistoryPaths(os.Getenv("HOME") + "/Library/Application Support/Microsoft Edge")
+		return eb.getPaths(os.Getenv("HOME") + "/Library/Application Support/Microsoft Edge")
 	case "linux":
-		return eb.GetHistoryPaths(os.Getenv("HOME") + "/.config/microsoft-edge/")
+		return eb.getPaths(os.Getenv("HOME") + "/.config/microsoft-edge/")
 	default:
 		return nil, fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
 	}
@@ -36,7 +36,7 @@ func (eb *EdgeBrowser) ExtractHistory(historyDBPath string, startTime, endTime t
 }
 
 // GetBrowserProfilePaths gets a collection of browser profile history paths, delegating to ChromeBrowser due to shared schema.
-func (eb *EdgeBrowser) GetHistoryPaths(dir string) ([]string, error) {
+func (eb *EdgeBrowser) getPaths(dir string) ([]string, error) {
 	chromeBrowser := &ChromeBrowser{}
-	return chromeBrowser.GetHistoryPaths(dir)
+	return chromeBrowser.getPaths(dir)
 }
