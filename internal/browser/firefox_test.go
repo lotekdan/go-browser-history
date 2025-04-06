@@ -64,12 +64,23 @@ func TestFirefoxBrowser_ExtractHistory(t *testing.T) {
 	defer db.Close()
 
 	_, err = db.Exec(`
-        CREATE TABLE moz_places (id INTEGER PRIMARY KEY, url TEXT, title TEXT);
-        CREATE TABLE moz_historyvisits (id INTEGER PRIMARY KEY, place_id INTEGER, visit_date INTEGER);
-        INSERT INTO moz_places VALUES (1, 'https://test.com', 'Test');
-        INSERT INTO moz_places VALUES (2, 'https://example.com', NULL);
-        INSERT INTO moz_historyvisits VALUES (1, 1, ?);
-        INSERT INTO moz_historyvisits VALUES (2, 2, ?);
+        CREATE TABLE moz_places (
+            id INTEGER PRIMARY KEY, 
+            url TEXT, 
+            title TEXT, 
+            visit_count INTEGER, 
+            typed INTEGER
+        );
+        CREATE TABLE moz_historyvisits (
+            id INTEGER PRIMARY KEY, 
+            place_id INTEGER, 
+            visit_date INTEGER, 
+            visit_type INTEGER
+        );
+        INSERT INTO moz_places VALUES (1, 'https://test.com', 'Test', 2, 1);
+        INSERT INTO moz_places VALUES (2, 'https://example.com', NULL, 1, 0);
+        INSERT INTO moz_historyvisits VALUES (1, 1, ?, 1);
+        INSERT INTO moz_historyvisits VALUES (2, 2, ?, 2);
     `, time.Now().Add(-1*time.Hour).UnixMicro(), time.Now().UnixMicro())
 	if err != nil {
 		t.Fatalf("Failed to setup test data: %v", err)

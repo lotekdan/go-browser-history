@@ -4,9 +4,13 @@ import "time"
 
 // HistoryEntry represents a single browser history entry.
 type HistoryEntry struct {
-	URL       string
-	Title     string
-	Timestamp time.Time
+	URL         string
+	Title       string
+	VisitCount  int
+	Typed       int
+	VisitType   string
+	Timestamp   time.Time
+	ProfileName string
 }
 
 // Browser defines the interface for browser-specific history extraction.

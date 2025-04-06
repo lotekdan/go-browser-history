@@ -14,10 +14,38 @@ import (
 
 // chromeHistoryQuery is the SQL query for retrieving Chrome history entries.
 const chromeHistoryQuery = `
-    SELECT url, title, last_visit_time 
-    FROM urls 
-    WHERE last_visit_time >= ? AND last_visit_time <= ?
-    ORDER BY last_visit_time DESC`
+	SELECT
+		url.url,
+		url.title,
+		url.visit_count,
+		url.typed_count,
+		CASE (visit.transition & 0xFF)
+			WHEN 0 THEN 'LINK'
+			WHEN 1 THEN 'TYPED'
+			WHEN 2 THEN 'AUTO_BOOKMARK'
+			WHEN 3 THEN 'AUTO_SUBFRAME'
+			WHEN 4 THEN 'MANUAL_SUBFRAME'
+			WHEN 5 THEN 'GENERATED'
+			WHEN 6 THEN 'AUTO_TOPLEVEL'
+			WHEN 7 THEN 'FORM_SUBMIT'
+			WHEN 8 THEN 'RELOAD'
+			WHEN 9 THEN 'KEYWORD'
+			WHEN 10 THEN 'KEYWORD_GENERATED'
+			ELSE 'UNKNOWN_CORE (' || (visit.transition & 0xFF) || ')'
+		END || 
+		CASE
+			WHEN (visit.transition & 0x10000000) = 0x10000000 THEN ' (REDIRECT)'
+			WHEN (visit.transition & 0x40000000) = 0x40000000 THEN ' (CLIENT_REDIRECT)'
+			WHEN (visit.transition & 0x80000000) = 0x80000000 THEN ' (SERVER_REDIRECT)'
+			WHEN (visit.transition & 0x01000000) = 0x01000000 THEN ' (FORWARD_BACK)'
+			WHEN (visit.transition & 0x02000000) = 0x02000000 THEN ' (FROM_ADDRESS_BAR)'
+			ELSE ''
+		END AS transition_desc,
+		visit.visit_time
+	FROM urls url
+	JOIN visits visit ON visit.url = url.id
+	WHERE last_visit_time >= ? AND last_visit_time <= ?
+	ORDER BY visit.visit_time DESC;`
 
 // ChromeBrowser implements the Browser interface for Google Chrome.
 type ChromeBrowser struct{}
@@ -102,15 +130,25 @@ func (cb *ChromeBrowser) ExtractHistory(historyDBPath string, startTime, endTime
 
 	var entries []HistoryEntry
 	for rows.Next() {
-		var pageURL, pageTitle string
+		var pageURL, pageTitle, pageVisitType string
+		var pageVisitCount, pageTyped int
 		var visitTimestamp int64
-		if err := rows.Scan(&pageURL, &pageTitle, &visitTimestamp); err != nil {
+		//var ProfileName string
+		if err := rows.Scan(&pageURL,
+			&pageTitle,
+			&pageVisitCount,
+			&pageTyped,
+			&pageVisitType,
+			&visitTimestamp); err != nil {
 			return nil, fmt.Errorf("failed to scan Chrome history row from %s: %v", historyDBPath, err)
 		}
 		entries = append(entries, HistoryEntry{
-			URL:       pageURL,
-			Title:     pageTitle,
-			Timestamp: ChromeTimeToTime(visitTimestamp),
+			URL:        pageURL,
+			Title:      pageTitle,
+			VisitCount: pageVisitCount,
+			Typed:      pageTyped,
+			VisitType:  pageVisitType,
+			Timestamp:  ChromeTimeToTime(visitTimestamp),
 		})
 	}
 
