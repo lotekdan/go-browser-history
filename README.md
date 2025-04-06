@@ -109,21 +109,15 @@ Supported Arguments
 
 ```text
 
--b, --browser strings Browser types (chrome, edge, brave, firefox)
-
--d, --days int Number of days of history to retrieve (default 30)
-
---debug Enable debug logging
-
--h, --help help for go-browser-history
-
--j, --json Output results in JSON format (CLI only)
-
--m, --mode string Run mode: 'cli' (default) or 'api' (default "cli")
-
--p, --port string Port for API mode (default "8080")
-
--v, --version version for go-browser-history
+  -b, --browser strings   Browser types (chrome, edge, brave, firefox)
+  -d, --days int          Number of days of history to retrieve (default 30)
+      --debug             Enable debug logging
+  -h, --help              help for go-browser-history
+  -j, --json              Output results in JSON format (CLI only)
+  -m, --mode string       Run mode: 'cli' (default) or 'api' (default "cli")
+  -p, --port string       Port for API mode (default "8080")
+      --pretty            For JSON output providing a pretty print format for reading
+  -v, --version           version for go-browser-history
 
 ```
 
