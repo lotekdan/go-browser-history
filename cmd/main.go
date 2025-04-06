@@ -43,13 +43,14 @@ func main() {
 					}
 					os.Exit(1)
 				}
-				historyService.OutputResults(entries, cfg.JSONOutput, os.Stdout)
+				historyService.OutputResults(entries, cfg, os.Stdout)
 			}
 		},
 	}
 	rootCmd.Flags().IntVarP(&cfg.HistoryDays, "days", "d", cfg.HistoryDays, "Number of days of history to retrieve")
 	rootCmd.Flags().StringSliceVarP(&browsers, "browser", "b", nil, "Browser types (chrome, edge, brave, firefox)")
 	rootCmd.Flags().BoolVarP(&cfg.JSONOutput, "json", "j", false, "Output results in JSON format (CLI only)")
+	rootCmd.Flags().BoolVar(&cfg.PrettyPrint, "pretty", false, "For JSON output providing a pretty print format for reading")
 	rootCmd.Flags().StringVarP(&mode, "mode", "m", "cli", "Run mode: 'cli' (default) or 'api'")
 	rootCmd.Flags().StringVarP(&cfg.Port, "port", "p", cfg.Port, "Port for API mode")
 	rootCmd.Flags().BoolVarP(&cfg.Debug, "debug", "", false, "Enable debug logging")

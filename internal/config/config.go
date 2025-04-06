@@ -6,6 +6,7 @@ type Config struct {
 	HistoryDays int
 	Browser     string
 	JSONOutput  bool
+	PrettyPrint bool
 	Mode        string
 	Port        string
 	Debug       bool // New field for debug logging

@@ -14,7 +14,7 @@ import (
 // Define the HistoryService interface
 type HistoryService interface {
 	GetHistory(cfg *config.Config, selectedBrowsers []string) ([]history.OutputEntry, error)
-	OutputResults(entries []history.OutputEntry, jsonOutput bool, writer io.Writer)
+	OutputResults(entries []history.OutputEntry, cfg *config.Config, writer io.Writer)
 }
 
 // Concrete implementation of HistoryService
@@ -96,8 +96,17 @@ func (s *historyService) fetchHistory(cfg *config.Config, browsers []string) ([]
 }
 
 // Implement OutputResults method
-func (s *historyService) OutputResults(entries []history.OutputEntry, jsonOutput bool, writer io.Writer) {
-	if jsonOutput {
+func (s *historyService) OutputResults(entries []history.OutputEntry, cfg *config.Config, writer io.Writer) {
+	if cfg.JSONOutput {
+		if cfg.PrettyPrint {
+			jsonData, err := json.MarshalIndent(entries, "", "  ")
+			if err != nil {
+				fmt.Fprintln(writer, "[]") // Include newline on error
+				return
+			}
+			fmt.Fprintln(writer, string(jsonData))
+			return
+		}
 		jsonData, err := json.Marshal(entries)
 		if err != nil {
 			fmt.Fprintln(writer, "[]") // Include newline on error

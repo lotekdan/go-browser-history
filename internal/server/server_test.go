@@ -27,8 +27,8 @@ func (m *mockHistoryService) GetHistory(cfg *config.Config, selectedBrowsers []s
 	return nil, nil
 }
 
-func (m *mockHistoryService) OutputResults(entries []history.OutputEntry, jsonOutput bool, writer io.Writer) {
-	if jsonOutput {
+func (m *mockHistoryService) OutputResults(entries []history.OutputEntry, cfg *config.Config, writer io.Writer) {
+	if cfg.JSONOutput {
 		jsonData, err := json.Marshal(entries)
 		if err != nil {
 			fmt.Fprintln(writer, "[]") // Return empty JSON array on error
