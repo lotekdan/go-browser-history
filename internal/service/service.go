@@ -127,14 +127,15 @@ func (s *historyService) OutputResults(entries []history.OutputEntry, cfg *confi
 		if title == "" {
 			title = "(no title)"
 		}
-		fmt.Fprintf(writer, "%-30s %-50s (%s) [%d] [%d] [%s] [%s]\n",
+		fmt.Fprintf(writer, "%-30s %-50s (%s) [%d] [%d] [%s] [%s] [%s]\n",
 			entry.Timestamp,
 			title,
 			entry.URL,
 			entry.VisitCount,
 			entry.Typed,
 			entry.VisitType,
-			entry.Browser)
+			entry.Browser,
+			entry.Profile)
 	}
 }
 

@@ -20,13 +20,13 @@ func GetBrowserHistory(browserImpl browser.Browser, startTime, endTime time.Time
 
 	var history []history.HistoryEntry
 	for _, sourceDBPath := range sourceDBPaths {
-		historyDBPath, cleanup, err := PrepareDatabaseFile(sourceDBPath, verbose)
+		historyDBPath, cleanup, err := PrepareDatabaseFile(sourceDBPath.Path, verbose)
 		if err != nil {
 			return nil, fmt.Errorf("failed to prepare database file at %s: %v", sourceDBPath, err)
 		}
 		defer cleanup()
 
-		entries, err := browserImpl.ExtractHistory(historyDBPath, startTime, endTime, verbose)
+		entries, err := browserImpl.ExtractHistory(historyDBPath, sourceDBPath.ProfileName, startTime, endTime, verbose)
 		if err != nil {
 			return nil, err
 		}

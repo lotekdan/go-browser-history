@@ -4,6 +4,12 @@ import (
 	"time"
 )
 
+type HistoryPathEntry struct {
+	Profile     string
+	ProfileName string
+	Path        string
+}
+
 // HistoryEntry represents a single browser history entry.
 type HistoryEntry struct {
 	URL        string
@@ -37,6 +43,7 @@ func ToOutputEntries(entries []HistoryEntry, browserName string) []OutputEntry {
 			Typed:      entry.Typed,
 			VisitType:  entry.VisitType,
 			Browser:    browserName,
+			Profile:    entry.Profile,
 		})
 	}
 	return output

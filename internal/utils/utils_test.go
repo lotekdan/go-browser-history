@@ -12,12 +12,12 @@ import (
 
 // MockBrowser mocks the browser.Browser interface
 type MockBrowser struct {
-	HistoryPath       []string
+	HistoryPath       []history.HistoryPathEntry
 	ExtractHistoryFn  func(dbPath string, startTime, endTime time.Time, verbose bool) ([]history.HistoryEntry, error)
-	GetHistoryPathsFn func() ([]string, error)
+	GetHistoryPathsFn func() ([]history.HistoryPathEntry, error)
 }
 
-func (m *MockBrowser) GetHistoryPaths() ([]string, error) {
+func (m *MockBrowser) GetHistoryPaths() ([]history.HistoryPathEntry, error) {
 	if m.GetHistoryPathsFn != nil {
 		return m.GetHistoryPathsFn()
 	}
@@ -42,7 +42,7 @@ func TestUtilsFunctions(t *testing.T) {
 	defer os.Remove(sourceFile.Name())
 	sourceFile.WriteString("data")
 	sourceFile.Close()
-	var source []string
+	var source []history.HistoryPathEntry
 	source = append(source, sourceFile.Name())
 
 	// Test GetBrowserHistory success

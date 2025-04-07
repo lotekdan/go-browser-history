@@ -18,7 +18,7 @@ func NewBraveBrowser() Browser {
 }
 
 // GetHistoryPath retrieves the path to Brave's history database file.
-func (bb *BraveBrowser) GetHistoryPaths() ([]string, error) {
+func (bb *BraveBrowser) GetHistoryPaths() ([]history.HistoryPathEntry, error) {
 	switch runtime.GOOS {
 	case "windows":
 		return bb.getPaths(os.Getenv("LOCALAPPDATA") + "\\BraveSoftware\\Brave-Browser\\User Data")
@@ -32,13 +32,13 @@ func (bb *BraveBrowser) GetHistoryPaths() ([]string, error) {
 }
 
 // ExtractHistory extracts Brave history entries, delegating to ChromeBrowser due to shared schema.
-func (bb *BraveBrowser) ExtractHistory(historyDBPath string, startTime, endTime time.Time, verbose bool) ([]history.HistoryEntry, error) {
+func (bb *BraveBrowser) ExtractHistory(historyDBPath, profile string, startTime, endTime time.Time, verbose bool) ([]history.HistoryEntry, error) {
 	chromeBrowser := &ChromeBrowser{}
-	return chromeBrowser.ExtractHistory(historyDBPath, startTime, endTime, verbose)
+	return chromeBrowser.ExtractHistory(historyDBPath, profile, startTime, endTime, verbose)
 }
 
 // GetHistoryPaths gets a collection of browser profile history paths, delegating to ChromeBrowser due to shared schema.
-func (bb *BraveBrowser) getPaths(dir string) ([]string, error) {
+func (bb *BraveBrowser) getPaths(dir string) ([]history.HistoryPathEntry, error) {
 	chromeBrowser := &ChromeBrowser{}
 	return chromeBrowser.getPaths(dir)
 }
