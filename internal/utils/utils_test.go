@@ -102,8 +102,6 @@ func TestGetBrowserHistory(t *testing.T) {
 	})
 }
 
-// TestHistoryFunctions tests core functionality of history.go, achieving ~93% coverage.
-// Uncovered lines are verbose debug logs for rare error cases, deemed non-critical.
 func TestHistoryFunctions(t *testing.T) {
 	// Test ToOutputEntries
 	entries := []history.HistoryEntry{{Timestamp: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC), Title: "Test", URL: "http://test.com"}}

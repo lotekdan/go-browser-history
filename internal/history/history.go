@@ -31,20 +31,3 @@ type OutputEntry struct {
 	Browser    string `json:"browser"`
 	Profile    string `json:"profile"`
 }
-
-func ToOutputEntries(entries []HistoryEntry, browserName string) []OutputEntry {
-	var output []OutputEntry
-	for _, entry := range entries {
-		output = append(output, OutputEntry{
-			Timestamp:  entry.Timestamp.Format(time.RFC3339),
-			Title:      entry.Title,
-			URL:        entry.URL,
-			VisitCount: entry.VisitCount,
-			Typed:      entry.Typed,
-			VisitType:  entry.VisitType,
-			Browser:    browserName,
-			Profile:    entry.Profile,
-		})
-	}
-	return output
-}
