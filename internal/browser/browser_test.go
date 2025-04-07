@@ -3,10 +3,12 @@ package browser
 import (
 	"testing"
 	"time"
+
+	"github.com/lotekdan/go-browser-history/internal/history"
 )
 
 func TestHistoryEntry(t *testing.T) {
-	entry := HistoryEntry{
+	entry := history.HistoryEntry{
 		URL:       "https://example.com",
 		Title:     "Example",
 		Timestamp: time.Now(),

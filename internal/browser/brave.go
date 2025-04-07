@@ -5,6 +5,8 @@ import (
 	"os"
 	"runtime"
 	"time"
+
+	"github.com/lotekdan/go-browser-history/internal/history"
 )
 
 // BraveBrowser implements the Browser interface for Brave Browser.
@@ -30,7 +32,7 @@ func (bb *BraveBrowser) GetHistoryPaths() ([]string, error) {
 }
 
 // ExtractHistory extracts Brave history entries, delegating to ChromeBrowser due to shared schema.
-func (bb *BraveBrowser) ExtractHistory(historyDBPath string, startTime, endTime time.Time, verbose bool) ([]HistoryEntry, error) {
+func (bb *BraveBrowser) ExtractHistory(historyDBPath string, startTime, endTime time.Time, verbose bool) ([]history.HistoryEntry, error) {
 	chromeBrowser := &ChromeBrowser{}
 	return chromeBrowser.ExtractHistory(historyDBPath, startTime, endTime, verbose)
 }

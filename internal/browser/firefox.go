@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-ini/ini"
+	"github.com/lotekdan/go-browser-history/internal/history"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -101,7 +102,7 @@ func (fb *FirefoxBrowser) getPaths(dir string) ([]string, error) {
 }
 
 // ExtractHistory gets records from the defined history db and date range.
-func (fb *FirefoxBrowser) ExtractHistory(historyDBPath string, startTime, endTime time.Time, verbose bool) ([]HistoryEntry, error) {
+func (fb *FirefoxBrowser) ExtractHistory(historyDBPath string, startTime, endTime time.Time, verbose bool) ([]history.HistoryEntry, error) {
 	db, err := sql.Open("sqlite3", "file:"+historyDBPath+"?mode=ro")
 	if err != nil {
 		return nil, fmt.Errorf("failed to open Firefox history database at %s: %v", historyDBPath, err)
@@ -118,7 +119,7 @@ func (fb *FirefoxBrowser) ExtractHistory(historyDBPath string, startTime, endTim
 	}
 	defer rows.Close()
 
-	var entries []HistoryEntry
+	var entries []history.HistoryEntry
 	for rows.Next() {
 		var pageURL, pageVisitType string
 		var pageVisitCount, pageTyped int
@@ -138,7 +139,7 @@ func (fb *FirefoxBrowser) ExtractHistory(historyDBPath string, startTime, endTim
 		if pageTitle.Valid {
 			title = pageTitle.String
 		}
-		entries = append(entries, HistoryEntry{
+		entries = append(entries, history.HistoryEntry{
 			URL:        pageURL,
 			Title:      title,
 			VisitCount: pageVisitCount,

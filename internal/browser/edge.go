@@ -5,6 +5,8 @@ import (
 	"os"      // For environment variables
 	"runtime" // For OS detection
 	"time"    // For time range parameters
+
+	"github.com/lotekdan/go-browser-history/internal/history"
 )
 
 // EdgeBrowser implements the Browser interface for Microsoft Edge.
@@ -30,7 +32,7 @@ func (eb *EdgeBrowser) GetHistoryPaths() ([]string, error) {
 }
 
 // ExtractHistory extracts Edge history entries, delegating to ChromeBrowser due to shared schema.
-func (eb *EdgeBrowser) ExtractHistory(historyDBPath string, startTime, endTime time.Time, verbose bool) ([]HistoryEntry, error) {
+func (eb *EdgeBrowser) ExtractHistory(historyDBPath string, startTime, endTime time.Time, verbose bool) ([]history.HistoryEntry, error) {
 	chromeBrowser := &ChromeBrowser{}
 	return chromeBrowser.ExtractHistory(historyDBPath, startTime, endTime, verbose)
 }

@@ -2,21 +2,31 @@ package history
 
 import (
 	"time"
-
-	"github.com/lotekdan/go-browser-history/internal/browser"
 )
+
+// HistoryEntry represents a single browser history entry.
+type HistoryEntry struct {
+	URL        string
+	Title      string
+	VisitCount int
+	Typed      int
+	VisitType  string
+	Timestamp  time.Time
+	Profile    string
+}
 
 type OutputEntry struct {
 	Timestamp  string `json:"timestamp"`
 	Title      string `json:"title"`
 	URL        string `json:"url"`
-	VisitCount int    `json:"visitcount"`
+	VisitCount int    `json:"visitCount"`
 	Typed      int    `json:"typed"`
-	VisitType  string `json:"visittype"`
+	VisitType  string `json:"visitType"`
 	Browser    string `json:"browser"`
+	Profile    string `json:"profile"`
 }
 
-func ToOutputEntries(entries []browser.HistoryEntry, browserName string) []OutputEntry {
+func ToOutputEntries(entries []HistoryEntry, browserName string) []OutputEntry {
 	var output []OutputEntry
 	for _, entry := range entries {
 		output = append(output, OutputEntry{

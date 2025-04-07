@@ -3,14 +3,12 @@ package history
 import (
 	"testing"
 	"time"
-
-	"github.com/lotekdan/go-browser-history/internal/browser"
 )
 
 // MockBrowser mocks the browser.Browser interface
 type MockBrowser struct {
 	HistoryPath       []string
-	ExtractHistoryFn  func(dbPath string, startTime, endTime time.Time, verbose bool) ([]browser.HistoryEntry, error)
+	ExtractHistoryFn  func(dbPath string, startTime, endTime time.Time, verbose bool) ([]HistoryEntry, error)
 	GetHistoryPathsFn func() ([]string, error)
 }
 
@@ -21,7 +19,7 @@ func (m *MockBrowser) GetHistoryPaths() ([]string, error) {
 	return m.HistoryPath, nil
 }
 
-func (m *MockBrowser) ExtractHistory(dbPath string, startTime, endTime time.Time, verbose bool) ([]browser.HistoryEntry, error) {
+func (m *MockBrowser) ExtractHistory(dbPath string, startTime, endTime time.Time, verbose bool) ([]HistoryEntry, error) {
 	if m.ExtractHistoryFn != nil {
 		return m.ExtractHistoryFn(dbPath, startTime, endTime, verbose)
 	}
@@ -32,7 +30,7 @@ func (m *MockBrowser) ExtractHistory(dbPath string, startTime, endTime time.Time
 // Uncovered lines are verbose debug logs for rare error cases, deemed non-critical.
 func TestHistoryFunctions(t *testing.T) {
 	// Test ToOutputEntries
-	entries := []browser.HistoryEntry{{Timestamp: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC), Title: "Test", URL: "http://test.com"}}
+	entries := []HistoryEntry{{Timestamp: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC), Title: "Test", URL: "http://test.com"}}
 	result := ToOutputEntries(entries, "test")
 	if result[0].Timestamp != "2023-01-01T00:00:00Z" || result[0].Browser != "test" {
 		t.Errorf("ToOutputEntries() = %v, want timestamp and browser set", result)

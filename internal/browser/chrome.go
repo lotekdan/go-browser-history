@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time" // For time conversions
 
+	"github.com/lotekdan/go-browser-history/internal/history"
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
 )
 
@@ -112,7 +113,7 @@ func (cb *ChromeBrowser) getPaths(dir string) ([]string, error) {
 }
 
 // ExtractHistory extracts Chrome history entries within the given time range.
-func (cb *ChromeBrowser) ExtractHistory(historyDBPath string, startTime, endTime time.Time, verbose bool) ([]HistoryEntry, error) {
+func (cb *ChromeBrowser) ExtractHistory(historyDBPath string, startTime, endTime time.Time, verbose bool) ([]history.HistoryEntry, error) {
 	db, err := sql.Open("sqlite3", "file:"+historyDBPath+"?mode=ro")
 	if err != nil {
 		return nil, fmt.Errorf("failed to open Chrome history database at %s: %v", historyDBPath, err)
@@ -128,7 +129,7 @@ func (cb *ChromeBrowser) ExtractHistory(historyDBPath string, startTime, endTime
 	}
 	defer rows.Close()
 
-	var entries []HistoryEntry
+	var entries []history.HistoryEntry
 	for rows.Next() {
 		var pageURL, pageTitle, pageVisitType string
 		var pageVisitCount, pageTyped int
@@ -142,7 +143,7 @@ func (cb *ChromeBrowser) ExtractHistory(historyDBPath string, startTime, endTime
 			&visitTimestamp); err != nil {
 			return nil, fmt.Errorf("failed to scan Chrome history row from %s: %v", historyDBPath, err)
 		}
-		entries = append(entries, HistoryEntry{
+		entries = append(entries, history.HistoryEntry{
 			URL:        pageURL,
 			Title:      pageTitle,
 			VisitCount: pageVisitCount,

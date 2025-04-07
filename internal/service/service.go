@@ -9,7 +9,7 @@ import (
 	"github.com/lotekdan/go-browser-history/internal/browser"
 	"github.com/lotekdan/go-browser-history/internal/config"
 	"github.com/lotekdan/go-browser-history/internal/history"
-	"github.com/lotekdan/go-browser-history/utils"
+	"github.com/lotekdan/go-browser-history/internal/utils"
 )
 
 // Define the HistoryService interface
@@ -73,7 +73,7 @@ func (s *historyService) fetchHistory(cfg *config.Config, browsers []string) ([]
 	var entries []history.OutputEntry
 	for _, name := range browsers {
 		browserImpl := s.browserMap[name]
-		historyDBPath, err := browserImpl.GetHistoryPaths()
+		historyDBPaths, err := browserImpl.GetHistoryPaths()
 		if err != nil {
 			if shouldLog(cfg) {
 				fmt.Fprintf(os.Stderr, "Debug: Error finding %s history file: %v\n", name, err)
@@ -81,7 +81,7 @@ func (s *historyService) fetchHistory(cfg *config.Config, browsers []string) ([]
 			continue
 		}
 		if shouldLog(cfg) && len(browsers) > 1 {
-			fmt.Fprintf(os.Stderr, "Debug: Using %s database path: %s\n", name, historyDBPath)
+			fmt.Fprintf(os.Stderr, "Debug: Using %s database path: %s\n", name, historyDBPaths)
 		}
 
 		browserEntries, err := utils.GetBrowserHistory(browserImpl, cfg.StartTime, cfg.EndTime, shouldLog(cfg))

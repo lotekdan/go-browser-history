@@ -8,13 +8,14 @@ import (
 
 	"github.com/lotekdan/go-browser-history/internal/browser"
 	"github.com/lotekdan/go-browser-history/internal/config"
+	"github.com/lotekdan/go-browser-history/internal/history"
 	"github.com/lotekdan/go-browser-history/internal/service"
 )
 
 // MockBrowser implements browser.Browser for testing
 type MockBrowser struct {
 	historyPaths []string
-	entries      []browser.HistoryEntry
+	entries      []history.HistoryEntry
 	pathErr      error
 	extractErr   error
 }
@@ -23,7 +24,7 @@ func (m *MockBrowser) GetHistoryPaths() ([]string, error) {
 	return m.historyPaths, m.pathErr
 }
 
-func (m *MockBrowser) ExtractHistory(dbPath string, startTime, endTime time.Time, debug bool) ([]browser.HistoryEntry, error) {
+func (m *MockBrowser) ExtractHistory(dbPath string, startTime, endTime time.Time, debug bool) ([]history.HistoryEntry, error) {
 	return m.entries, m.extractErr
 }
 
@@ -48,7 +49,7 @@ func TestGetHistory(t *testing.T) {
 			selectedBrowsers: []string{"mock"},
 			mockBrowser: &MockBrowser{
 				historyPaths: tempPath,
-				entries:      []browser.HistoryEntry{},
+				entries:      []history.HistoryEntry{},
 				pathErr:      nil,
 				extractErr:   nil,
 			},
@@ -67,7 +68,7 @@ func TestGetHistory(t *testing.T) {
 			selectedBrowsers: []string{"mock"},
 			mockBrowser: &MockBrowser{
 				historyPaths: tempPath,
-				entries: []browser.HistoryEntry{
+				entries: []history.HistoryEntry{
 					{URL: "http://example.com", Title: "Example", Timestamp: time.Now()},
 				},
 				pathErr:    nil,
@@ -81,7 +82,7 @@ func TestGetHistory(t *testing.T) {
 			selectedBrowsers: []string{"mock"},
 			mockBrowser: &MockBrowser{
 				historyPaths: tempPath,
-				entries:      []browser.HistoryEntry{{URL: "http://example.com"}},
+				entries:      []history.HistoryEntry{{URL: "http://example.com"}},
 				pathErr:      os.ErrNotExist,
 				extractErr:   nil,
 			},
