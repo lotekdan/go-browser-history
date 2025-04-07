@@ -9,6 +9,7 @@ import (
 	"github.com/lotekdan/go-browser-history/internal/browser"
 	"github.com/lotekdan/go-browser-history/internal/config"
 	"github.com/lotekdan/go-browser-history/internal/history"
+	"github.com/lotekdan/go-browser-history/internal/utils"
 )
 
 // Define the HistoryService interface
@@ -72,7 +73,7 @@ func (s *historyService) fetchHistory(cfg *config.Config, browsers []string) ([]
 	var entries []history.OutputEntry
 	for _, name := range browsers {
 		browserImpl := s.browserMap[name]
-		historyDBPath, err := browserImpl.GetHistoryPath()
+		historyDBPaths, err := browserImpl.GetHistoryPaths()
 		if err != nil {
 			if shouldLog(cfg) {
 				fmt.Fprintf(os.Stderr, "Debug: Error finding %s history file: %v\n", name, err)
@@ -80,10 +81,10 @@ func (s *historyService) fetchHistory(cfg *config.Config, browsers []string) ([]
 			continue
 		}
 		if shouldLog(cfg) && len(browsers) > 1 {
-			fmt.Fprintf(os.Stderr, "Debug: Using %s database path: %s\n", name, historyDBPath)
+			fmt.Fprintf(os.Stderr, "Debug: Using %s database path: %s\n", name, historyDBPaths)
 		}
 
-		browserEntries, err := history.GetBrowserHistory(browserImpl, cfg.StartTime, cfg.EndTime, shouldLog(cfg))
+		browserEntries, err := utils.GetBrowserHistory(browserImpl, cfg.StartTime, cfg.EndTime, shouldLog(cfg))
 		if err != nil {
 			if shouldLog(cfg) {
 				fmt.Fprintf(os.Stderr, "Debug: Error retrieving %s history: %v\n", name, err)
@@ -126,14 +127,15 @@ func (s *historyService) OutputResults(entries []history.OutputEntry, cfg *confi
 		if title == "" {
 			title = "(no title)"
 		}
-		fmt.Fprintf(writer, "%-30s %-50s (%s) [%d] [%d] [%s] [%s]\n",
+		fmt.Fprintf(writer, "%-30s %-50s (%s) [%d] [%d] [%s] [%s] [%s]\n",
 			entry.Timestamp,
 			title,
 			entry.URL,
 			entry.VisitCount,
 			entry.Typed,
 			entry.VisitType,
-			entry.Browser)
+			entry.Browser,
+			entry.Profile)
 	}
 }
 

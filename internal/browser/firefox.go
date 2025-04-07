@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-ini/ini"
+	"github.com/lotekdan/go-browser-history/internal/history"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -44,12 +45,12 @@ func NewFirefoxBrowser() Browser {
 }
 
 // GetHistoryPath retrieves collection of paths to Firefox's history database file.
-func (fb *FirefoxBrowser) GetHistoryPath() ([]string, error) {
+func (fb *FirefoxBrowser) GetHistoryPaths() ([]history.HistoryPathEntry, error) {
 	baseDir, err := fb.getFirefoxProfileBaseDir()
 	if err != nil {
 		return nil, err
 	}
-	return fb.GetHistoryPaths(baseDir)
+	return fb.getPaths(baseDir)
 }
 
 func (fb *FirefoxBrowser) getFirefoxProfileBaseDir() (string, error) {
@@ -66,14 +67,14 @@ func (fb *FirefoxBrowser) getFirefoxProfileBaseDir() (string, error) {
 }
 
 // GetBrowserProfilePaths gets a collection of browser profile history paths.
-func (fb *FirefoxBrowser) GetHistoryPaths(dir string) ([]string, error) {
+func (fb *FirefoxBrowser) getPaths(dir string) ([]history.HistoryPathEntry, error) {
 	profileIniFile := filepath.Join(dir, "profiles.ini")
 	cfg, err := ini.Load(profileIniFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load profiles.ini: %w", err)
 	}
 
-	var profiles []string
+	var profilePaths []history.HistoryPathEntry
 
 	for _, section := range cfg.Sections() {
 		if !strings.HasPrefix(section.Name(), "Profile") {
@@ -81,6 +82,7 @@ func (fb *FirefoxBrowser) GetHistoryPaths(dir string) ([]string, error) {
 		}
 
 		path := section.Key("Path").String()
+		name := section.Key("Name").String()
 		isRelative := section.Key("IsRelative").MustInt(0) == 1
 
 		if path == "" {
@@ -95,13 +97,17 @@ func (fb *FirefoxBrowser) GetHistoryPaths(dir string) ([]string, error) {
 		if os.IsNotExist(err) {
 			continue
 		}
-		profiles = append(profiles, path)
+		profilePaths = append(profilePaths, history.HistoryPathEntry{
+			Profile:     section.Name(),
+			ProfileName: name,
+			Path:        path,
+		})
 	}
-	return profiles, nil
+	return profilePaths, nil
 }
 
 // ExtractHistory gets records from the defined history db and date range.
-func (fb *FirefoxBrowser) ExtractHistory(historyDBPath string, startTime, endTime time.Time, verbose bool) ([]HistoryEntry, error) {
+func (fb *FirefoxBrowser) ExtractHistory(historyDBPath, profile string, startTime, endTime time.Time, verbose bool) ([]history.HistoryEntry, error) {
 	db, err := sql.Open("sqlite3", "file:"+historyDBPath+"?mode=ro")
 	if err != nil {
 		return nil, fmt.Errorf("failed to open Firefox history database at %s: %v", historyDBPath, err)
@@ -118,13 +124,12 @@ func (fb *FirefoxBrowser) ExtractHistory(historyDBPath string, startTime, endTim
 	}
 	defer rows.Close()
 
-	var entries []HistoryEntry
+	var entries []history.HistoryEntry
 	for rows.Next() {
 		var pageURL, pageVisitType string
 		var pageVisitCount, pageTyped int
 		var pageTitle sql.NullString
 		var visitTimestamp int64
-		//var ProfileName string
 		if err := rows.Scan(
 			&pageURL,
 			&pageTitle,
@@ -138,13 +143,14 @@ func (fb *FirefoxBrowser) ExtractHistory(historyDBPath string, startTime, endTim
 		if pageTitle.Valid {
 			title = pageTitle.String
 		}
-		entries = append(entries, HistoryEntry{
+		entries = append(entries, history.HistoryEntry{
 			URL:        pageURL,
 			Title:      title,
 			VisitCount: pageVisitCount,
 			Typed:      pageTyped,
 			VisitType:  pageVisitType,
 			Timestamp:  time.UnixMicro(visitTimestamp),
+			Profile:    profile,
 		})
 	}
 	if err := rows.Err(); err != nil {

@@ -5,6 +5,8 @@ import (
 	"os"
 	"runtime"
 	"time"
+
+	"github.com/lotekdan/go-browser-history/internal/history"
 )
 
 // BraveBrowser implements the Browser interface for Brave Browser.
@@ -16,27 +18,27 @@ func NewBraveBrowser() Browser {
 }
 
 // GetHistoryPath retrieves the path to Brave's history database file.
-func (bb *BraveBrowser) GetHistoryPath() ([]string, error) {
+func (bb *BraveBrowser) GetHistoryPaths() ([]history.HistoryPathEntry, error) {
 	switch runtime.GOOS {
 	case "windows":
-		return bb.GetHistoryPaths(os.Getenv("LOCALAPPDATA") + "\\BraveSoftware\\Brave-Browser\\User Data")
+		return bb.getPaths(os.Getenv("LOCALAPPDATA") + "\\BraveSoftware\\Brave-Browser\\User Data")
 	case "darwin":
-		return bb.GetHistoryPaths(os.Getenv("HOME") + "/Library/Application Support/BraveSoftware/Brave-Browser")
+		return bb.getPaths(os.Getenv("HOME") + "/Library/Application Support/BraveSoftware/Brave-Browser")
 	case "linux":
-		return bb.GetHistoryPaths(os.Getenv("HOME") + "/.config/BraveSoftware/Brave-Browser")
+		return bb.getPaths(os.Getenv("HOME") + "/.config/BraveSoftware/Brave-Browser")
 	default:
 		return nil, fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
 	}
 }
 
 // ExtractHistory extracts Brave history entries, delegating to ChromeBrowser due to shared schema.
-func (bb *BraveBrowser) ExtractHistory(historyDBPath string, startTime, endTime time.Time, verbose bool) ([]HistoryEntry, error) {
+func (bb *BraveBrowser) ExtractHistory(historyDBPath, profile string, startTime, endTime time.Time, verbose bool) ([]history.HistoryEntry, error) {
 	chromeBrowser := &ChromeBrowser{}
-	return chromeBrowser.ExtractHistory(historyDBPath, startTime, endTime, verbose)
+	return chromeBrowser.ExtractHistory(historyDBPath, profile, startTime, endTime, verbose)
 }
 
 // GetHistoryPaths gets a collection of browser profile history paths, delegating to ChromeBrowser due to shared schema.
-func (bb *BraveBrowser) GetHistoryPaths(dir string) ([]string, error) {
+func (bb *BraveBrowser) getPaths(dir string) ([]history.HistoryPathEntry, error) {
 	chromeBrowser := &ChromeBrowser{}
-	return chromeBrowser.GetHistoryPaths(dir)
+	return chromeBrowser.getPaths(dir)
 }

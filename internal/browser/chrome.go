@@ -2,13 +2,16 @@ package browser
 
 import (
 	"database/sql" // For SQL database interactions
-	"fmt"          // For formatted output and error messages
-	"os"           // For environment variables
+	"encoding/json"
+	"fmt" // For formatted output and error messages
+	"io/ioutil"
+	"os" // For environment variables
 	"path/filepath"
 	"runtime" // For OS detection
 	"strings"
 	"time" // For time conversions
 
+	"github.com/lotekdan/go-browser-history/internal/history"
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
 )
 
@@ -56,16 +59,16 @@ func NewChromeBrowser() Browser {
 }
 
 // GetHistoryPath retrieves collection of paths to Chrome's history database file.
-func (cb *ChromeBrowser) GetHistoryPath() ([]string, error) {
+func (cb *ChromeBrowser) GetHistoryPaths() ([]history.HistoryPathEntry, error) {
 	switch runtime.GOOS {
 	case "windows":
-		paths, _ := cb.GetHistoryPaths(os.Getenv("LOCALAPPDATA") + "\\Google\\Chrome\\User Data")
+		paths, _ := cb.getPaths(os.Getenv("LOCALAPPDATA") + "\\Google\\Chrome\\User Data")
 		return paths, nil
 	case "darwin":
-		paths, _ := cb.GetHistoryPaths(os.Getenv("HOME") + "/Library/Application Support/Google/Chrome")
+		paths, _ := cb.getPaths(os.Getenv("HOME") + "/Library/Application Support/Google/Chrome")
 		return paths, nil
 	case "linux":
-		paths, _ := cb.GetHistoryPaths(os.Getenv("HOME") + "/.config/google-chrome")
+		paths, _ := cb.getPaths(os.Getenv("HOME") + "/.config/google-chrome")
 		return paths, nil
 	default:
 		return nil, fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
@@ -73,7 +76,7 @@ func (cb *ChromeBrowser) GetHistoryPath() ([]string, error) {
 }
 
 // GetBrowserProfilePaths gets a collection of browser profile history paths.
-func (cb *ChromeBrowser) GetHistoryPaths(dir string) ([]string, error) {
+func (cb *ChromeBrowser) getPaths(dir string) ([]history.HistoryPathEntry, error) {
 	info, err := os.Stat(dir)
 	if err != nil {
 		return nil, err
@@ -93,14 +96,18 @@ func (cb *ChromeBrowser) GetHistoryPaths(dir string) ([]string, error) {
 		return nil, err
 	}
 
-	var profilePaths []string
-
+	var profilePaths []history.HistoryPathEntry
 	for _, entry := range entries {
 		if entry.IsDir() {
 			if strings.HasPrefix(strings.ToLower(entry.Name()), "profile") ||
 				strings.Contains(strings.ToLower(entry.Name()), "default") {
 				fullPath := filepath.Join(dir, entry.Name(), "History")
-				profilePaths = append(profilePaths, fullPath)
+				profileName := cb.getProfileName(filepath.Join(dir, entry.Name(), "Preferences"))
+				profilePaths = append(profilePaths, history.HistoryPathEntry{
+					Profile:     entry.Name(),
+					ProfileName: profileName,
+					Path:        fullPath,
+				})
 			}
 		}
 	}
@@ -111,8 +118,37 @@ func (cb *ChromeBrowser) GetHistoryPaths(dir string) ([]string, error) {
 	return profilePaths, nil
 }
 
+// ProfileData struct used for extracting profile name from Preferences file.
+type ProfileData struct {
+	Profile struct {
+		Name string `json:"name"`
+	} `json:"profile"`
+}
+
+// getProfileName extracts the profile name for chrome browsers from the profile Preferences file.
+func (cb *ChromeBrowser) getProfileName(profilePath string) string {
+	file, err := os.Open(profilePath)
+	if err != nil {
+		return ""
+	}
+	defer file.Close()
+
+	data, err := ioutil.ReadAll(file)
+	if err != nil {
+		return ""
+	}
+
+	var profileData ProfileData
+	err = json.Unmarshal(data, &profileData)
+	if err != nil {
+		return ""
+	}
+
+	return profileData.Profile.Name
+}
+
 // ExtractHistory extracts Chrome history entries within the given time range.
-func (cb *ChromeBrowser) ExtractHistory(historyDBPath string, startTime, endTime time.Time, verbose bool) ([]HistoryEntry, error) {
+func (cb *ChromeBrowser) ExtractHistory(historyDBPath, profile string, startTime, endTime time.Time, verbose bool) ([]history.HistoryEntry, error) {
 	db, err := sql.Open("sqlite3", "file:"+historyDBPath+"?mode=ro")
 	if err != nil {
 		return nil, fmt.Errorf("failed to open Chrome history database at %s: %v", historyDBPath, err)
@@ -128,12 +164,11 @@ func (cb *ChromeBrowser) ExtractHistory(historyDBPath string, startTime, endTime
 	}
 	defer rows.Close()
 
-	var entries []HistoryEntry
+	var entries []history.HistoryEntry
 	for rows.Next() {
 		var pageURL, pageTitle, pageVisitType string
 		var pageVisitCount, pageTyped int
 		var visitTimestamp int64
-		//var ProfileName string
 		if err := rows.Scan(&pageURL,
 			&pageTitle,
 			&pageVisitCount,
@@ -142,13 +177,14 @@ func (cb *ChromeBrowser) ExtractHistory(historyDBPath string, startTime, endTime
 			&visitTimestamp); err != nil {
 			return nil, fmt.Errorf("failed to scan Chrome history row from %s: %v", historyDBPath, err)
 		}
-		entries = append(entries, HistoryEntry{
+		entries = append(entries, history.HistoryEntry{
 			URL:        pageURL,
 			Title:      pageTitle,
 			VisitCount: pageVisitCount,
 			Typed:      pageTyped,
 			VisitType:  pageVisitType,
 			Timestamp:  ChromeTimeToTime(visitTimestamp),
+			Profile:    profile,
 		})
 	}
 

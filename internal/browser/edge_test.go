@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"testing"
+
+	"github.com/lotekdan/go-browser-history/internal/history"
 )
 
 func TestNewEdgeBrowser(t *testing.T) {
@@ -77,15 +79,19 @@ func TestEdgeBrowser_GetHistoryPath(t *testing.T) {
 				fmt.Printf("baseDir contents: %v\n", entries)
 			}
 
-			paths, err := eb.GetHistoryPath()
+			paths, err := eb.GetHistoryPaths()
 			fmt.Printf("paths: %v, err: %v\n", paths, err)
+			historyPaths := history.HistoryPathEntry{
+				Profile: "Default",
+				Path:    historyPath,
+			}
 			if err != nil && tt.expectPaths {
 				t.Errorf("Unexpected error when expecting paths: %v", err)
 			}
 			if len(paths) < tt.expectedMinLen {
 				t.Errorf("Expected at least %d paths, got %d", tt.expectedMinLen, len(paths))
 			}
-			if tt.setupProfile && len(paths) > 0 && paths[0] != historyPath {
+			if tt.setupProfile && len(paths) > 0 && paths[0] != historyPaths {
 				t.Errorf("Expected path %s, got %s", historyPath, paths[0])
 			}
 			if !tt.setupProfile && err != nil && !os.IsNotExist(err) {
