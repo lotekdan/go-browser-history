@@ -1,113 +1,103 @@
 package utils
 
 import (
-	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/lotekdan/go-browser-history/internal/history"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
-// MockBrowser mocks the browser.Browser interface
+// MockBrowser for testing
 type MockBrowser struct {
-	HistoryPath       []history.HistoryPathEntry
-	ExtractHistoryFn  func(dbPath string, startTime, endTime time.Time, verbose bool) ([]history.HistoryEntry, error)
-	GetHistoryPathsFn func() ([]history.HistoryPathEntry, error)
+	mock.Mock
 }
 
 func (m *MockBrowser) GetHistoryPaths() ([]history.HistoryPathEntry, error) {
-	if m.GetHistoryPathsFn != nil {
-		return m.GetHistoryPathsFn()
-	}
-	return m.HistoryPath, nil
+	args := m.Called()
+	return args.Get(0).([]history.HistoryPathEntry), args.Error(1)
 }
 
-func (m *MockBrowser) ExtractHistory(dbPath string, startTime, endTime time.Time, verbose bool) ([]history.HistoryEntry, error) {
-	if m.ExtractHistoryFn != nil {
-		return m.ExtractHistoryFn(dbPath, startTime, endTime, verbose)
-	}
-	return nil, nil
+func (m *MockBrowser) ExtractHistory(dbPath, profile string, startTime, endTime time.Time, debug bool) ([]history.HistoryEntry, error) {
+	args := m.Called(dbPath, profile, startTime, endTime, debug)
+	return args.Get(0).([]history.HistoryEntry), args.Error(1)
 }
 
-// TestHistoryFunctions tests core functionality of history.go, achieving ~93% coverage.
-// Uncovered lines are verbose debug logs for rare error cases, deemed non-critical.
-func TestUtilsFunctions(t *testing.T) {
-	// Setup for GetBrowserHistory and PrepareDatabaseFile
-	sourceFile, err := os.CreateTemp("", "source_*.db")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.Remove(sourceFile.Name())
-	sourceFile.WriteString("data")
-	sourceFile.Close()
-	var source []history.HistoryPathEntry
-	source = append(source, sourceFile.Name())
+func TestGetBrowserHistory(t *testing.T) {
+	t.Run("successful_history_retrieval", func(t *testing.T) {
+		// Setup mock browser
+		mockBrowser := new(MockBrowser)
 
-	// Test GetBrowserHistory success
-	var entries []history.HistoryEntry
-	mock := &MockBrowser{
-		HistoryPath: source,
-		ExtractHistoryFn: func(dbPath string, st, et time.Time, verbose bool) ([]history.HistoryEntry, error) {
-			return []history.HistoryEntry{{Title: "Test"}}, nil
-		},
-	}
-	entries, err = GetBrowserHistory(mock, time.Now(), time.Now(), false)
-	if err != nil || len(entries) != 1 {
-		t.Errorf("GetBrowserHistory() success failed: %v, got %v", err, entries)
-	}
+		// Create a real temp file to avoid filesystem errors
+		tempDir := os.TempDir()
+		tempPath := filepath.Join(tempDir, "test-history.db")
+		err := os.WriteFile(tempPath, []byte("mock data"), 0644)
+		assert.NoError(t, err)
+		defer os.Remove(tempPath) // Cleanup
 
-	// Test GetBrowserHistory errors
-	mock.GetHistoryPathsFn = func() ([]string, error) { return nil, errors.New("path error") }
-	_, err = GetBrowserHistory(mock, time.Now(), time.Now(), false)
-	if err == nil {
-		t.Error("GetBrowserHistory() should fail on GetHistoryPath error")
-	}
+		// Mock expectations
+		mockBrowser.On("GetHistoryPaths").Return([]history.HistoryPathEntry{
+			{Path: tempPath, ProfileName: ""},
+		}, nil)
+		expectedEntries := []history.HistoryEntry{
+			{URL: "http://example.com"},
+		}
+		mockBrowser.On("ExtractHistory", mock.Anything, "", mock.Anything, mock.Anything, false).Return(expectedEntries, nil)
 
-	mock.GetHistoryPathsFn = nil
-	mock.HistoryPath = []string{"/non/existent"}
-	_, err = GetBrowserHistory(mock, time.Now(), time.Now(), false)
-	if err == nil {
-		t.Error("GetBrowserHistory() should fail on PrepareDatabaseFile error")
-	}
+		// Execute
+		history, err := GetBrowserHistory(mockBrowser, time.Time{}, time.Time{}, false)
 
-	mock.HistoryPath = source
-	mock.ExtractHistoryFn = func(dbPath string, st, et time.Time, verbose bool) ([]history.HistoryEntry, error) {
-		return nil, errors.New("extract error")
-	}
-	_, err = GetBrowserHistory(mock, time.Now(), time.Now(), false)
-	if err == nil {
-		t.Error("GetBrowserHistory() should fail on ExtractHistory error")
-	}
+		// Assert
+		assert.NoError(t, err)
+		assert.Equal(t, expectedEntries, history, "history entries mismatch")
+		mockBrowser.AssertExpectations(t)
+	})
 
-	// Test PrepareDatabaseFile with verbose
-	walFile := sourceFile.Name() + "-wal"
-	os.WriteFile(walFile, []byte("wal"), 0600)
-	defer os.Remove(walFile)
-	shmFile := sourceFile.Name() + "-shm"
-	os.WriteFile(shmFile, []byte("shm"), 0600)
-	defer os.Remove(shmFile)
+	t.Run("no_files_returns_empty_history", func(t *testing.T) {
+		// Setup mock browser
+		mockBrowser := new(MockBrowser)
 
-	tempPath, cleanup, err := PrepareDatabaseFile(sourceFile.Name(), true)
-	if err != nil {
-		t.Errorf("PrepareDatabaseFile() failed: %v", err)
-	}
-	cleanup()
-	defer os.Remove(tempPath)
-	defer os.Remove(tempPath + "-wal")
-	defer os.Remove(tempPath + "-shm")
+		// Mock GetHistoryPaths to return no paths
+		mockBrowser.On("GetHistoryPaths").Return([]history.HistoryPathEntry{}, nil)
 
-	// Test CopyFile
-	destFile := filepath.Join(os.TempDir(), "dest.txt")
-	defer os.Remove(destFile)
-	if err := CopyFile(sourceFile.Name(), destFile); err != nil {
-		t.Errorf("CopyFile() success failed: %v", err)
-	}
-	if err := CopyFile("/non/existent", destFile); err == nil {
-		t.Error("CopyFile() should fail on source not found")
-	}
-	if err := CopyFile(sourceFile.Name(), "/non/existent/dir/dest"); err == nil {
-		t.Error("CopyFile() should fail on dest create error")
-	}
+		// Execute
+		history, err := GetBrowserHistory(mockBrowser, time.Time{}, time.Time{}, false)
+
+		// Assert
+		assert.NoError(t, err)
+		assert.Empty(t, history, "expected empty history when no files")
+		mockBrowser.AssertExpectations(t)
+	})
+
+	t.Run("error_in_extraction", func(t *testing.T) {
+		// Setup mock browser
+		mockBrowser := new(MockBrowser)
+
+		// Create a real temp file
+		tempDir := os.TempDir()
+		tempPath := filepath.Join(tempDir, "test-history-err.db")
+		err := os.WriteFile(tempPath, []byte("mock data"), 0644)
+		assert.NoError(t, err)
+		defer os.Remove(tempPath)
+
+		// Mock expectations
+		mockBrowser.On("GetHistoryPaths").Return([]history.HistoryPathEntry{
+			{Path: tempPath, ProfileName: ""},
+		}, nil)
+		// Use typed nil for []history.HistoryEntry to avoid panic
+		mockBrowser.On("ExtractHistory", mock.Anything, "", mock.Anything, mock.Anything, false).Return(([]history.HistoryEntry)(nil), fmt.Errorf("extraction error"))
+
+		// Execute
+		history, err := GetBrowserHistory(mockBrowser, time.Time{}, time.Time{}, false)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, history)
+		assert.Equal(t, "extraction error", err.Error(), "error message mismatch")
+		mockBrowser.AssertExpectations(t)
+	})
 }

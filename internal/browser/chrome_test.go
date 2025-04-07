@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lotekdan/go-browser-history/internal/history"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -43,6 +44,10 @@ func TestChromeBrowser_GetHistoryPath(t *testing.T) {
 	}
 	historyPath := filepath.Join(defaultDir, "History")
 	file, err := os.Create(historyPath)
+	historyPaths := history.HistoryPathEntry{
+		Profile: "Default",
+		Path:    historyPath,
+	}
 	if err != nil {
 		t.Fatalf("Failed to create History file: %v", err)
 	}
@@ -55,7 +60,7 @@ func TestChromeBrowser_GetHistoryPath(t *testing.T) {
 	if len(paths) == 0 {
 		t.Error("Expected at least one path, got none")
 	}
-	if paths[0] != historyPath {
+	if paths[0] != historyPaths {
 		t.Errorf("Expected path %s, got %s", historyPath, paths[0])
 	}
 }
@@ -63,6 +68,7 @@ func TestChromeBrowser_GetHistoryPath(t *testing.T) {
 func TestChromeBrowser_ExtractHistory(t *testing.T) {
 	tempDir := t.TempDir()
 	dbPath := filepath.Join(tempDir, "test_history.db")
+	profile := "Default"
 
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
@@ -101,7 +107,7 @@ func TestChromeBrowser_ExtractHistory(t *testing.T) {
 	startTime := time.Now().Add(-2 * time.Hour)
 	endTime := time.Now().Add(time.Hour)
 
-	entries, err := cb.ExtractHistory(dbPath, startTime, endTime, false)
+	entries, err := cb.ExtractHistory(dbPath, profile, startTime, endTime, false)
 	if err != nil {
 		t.Fatalf("ExtractHistory failed: %v", err)
 	}

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/go-ini/ini"
+	"github.com/lotekdan/go-browser-history/internal/history"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -35,6 +36,10 @@ func TestFirefoxBrowser_GetHistoryPath(t *testing.T) {
 	}
 
 	placesPath := filepath.Join(profileDir, "places.sqlite")
+	placesPaths := history.HistoryPathEntry{
+		Profile: "Profile0",
+		Path:    placesPath,
+	}
 	file, err := os.Create(placesPath)
 	if err != nil {
 		t.Fatalf("Failed to create places.sqlite: %v", err)
@@ -48,7 +53,7 @@ func TestFirefoxBrowser_GetHistoryPath(t *testing.T) {
 	if len(paths) != 1 {
 		t.Errorf("Expected 1 path, got %d", len(paths))
 	}
-	if paths[0] != placesPath {
+	if paths[0] != placesPaths {
 		t.Errorf("Expected path %s, got %s", placesPath, paths[0])
 	}
 }
@@ -56,6 +61,7 @@ func TestFirefoxBrowser_GetHistoryPath(t *testing.T) {
 func TestFirefoxBrowser_ExtractHistory(t *testing.T) {
 	tempDir := t.TempDir()
 	dbPath := filepath.Join(tempDir, "test_places.db")
+	profile := "Default"
 
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
@@ -90,7 +96,7 @@ func TestFirefoxBrowser_ExtractHistory(t *testing.T) {
 	startTime := time.Now().Add(-2 * time.Hour)
 	endTime := time.Now().Add(time.Hour)
 
-	entries, err := fb.ExtractHistory(dbPath, startTime, endTime, false)
+	entries, err := fb.ExtractHistory(dbPath, profile, startTime, endTime, false)
 	if err != nil {
 		t.Fatalf("ExtractHistory failed: %v", err)
 	}
