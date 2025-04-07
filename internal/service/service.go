@@ -91,7 +91,7 @@ func (s *historyService) fetchHistory(cfg *config.Config, browsers []string) ([]
 			}
 			continue
 		}
-		entries = append(entries, history.ToOutputEntries(browserEntries, name)...)
+		entries = append(entries, utils.ToOutputEntries(browserEntries, name)...)
 	}
 	return entries, nil
 }

@@ -92,3 +92,20 @@ func CopyFile(src, dst string) error {
 
 	return destFile.Sync()
 }
+
+func ToOutputEntries(entries []history.HistoryEntry, browserName string) []history.OutputEntry {
+	var output []history.OutputEntry
+	for _, entry := range entries {
+		output = append(output, history.OutputEntry{
+			Timestamp:  entry.Timestamp.Format(time.RFC3339),
+			Title:      entry.Title,
+			URL:        entry.URL,
+			VisitCount: entry.VisitCount,
+			Typed:      entry.Typed,
+			VisitType:  entry.VisitType,
+			Browser:    browserName,
+			Profile:    entry.Profile,
+		})
+	}
+	return output
+}
