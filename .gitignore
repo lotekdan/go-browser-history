@@ -41,3 +41,4 @@ Thumbs.db
 # Project-specific build output
 go-browser-history
 go-browser-history-test.exe
+bin/*
