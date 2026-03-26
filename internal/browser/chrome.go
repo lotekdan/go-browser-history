@@ -47,7 +47,7 @@ const chromeHistoryQuery = `
 		visit.visit_time
 	FROM urls url
 	JOIN visits visit ON visit.url = url.id
-	WHERE last_visit_time >= ? AND last_visit_time <= ?
+	WHERE visit.visit_time >= ? AND visit.visit_time <= ?
 	ORDER BY visit.visit_time DESC;`
 
 // ChromeBrowser implements the Browser interface for Google Chrome.
